@@ -9,7 +9,7 @@ RAY_STEP = 2
 RAYS_AMOUNT = 128
 
 # ====[ very low quality ]====
-# RAY_STEP = 3
+# RAY_STEP = 2
 # RAYS_AMOUNT = 32
 
 FOV = 60

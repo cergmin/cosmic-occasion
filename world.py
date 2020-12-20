@@ -28,6 +28,14 @@ class WorldObject:
         self.x = x
         self.y = y
         self.hight = hight
+    
+    def get_info(self):
+        return {
+            'type': type(self).__name__,
+            'x': self.x,
+            'y': self.y,
+            'height': self.hight
+        }
 
 
 class Wall(WorldObject):
