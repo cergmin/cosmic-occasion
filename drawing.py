@@ -1,5 +1,5 @@
 import pygame
-from math import tan, radians
+from math import tan, cos, radians
 from settings import *
 from ray import Ray
 from world import World
@@ -45,6 +45,9 @@ class Drawing:
                 ray_angle_x,
                 player.vy
             )
+            
+            # Исправление эффекта рыбьего глаза
+            depth *= cos(radians(player.vx - ray_angle_x))
 
             # Расстояние от игрока до экрана
             dist = RAYS_AMOUNT / (2 * tan(radians(FOV / 2)))
