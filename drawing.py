@@ -35,7 +35,9 @@ class Drawing:
 
     def world(self, world, player):
         ray = Ray(world, player)
-
+        
+        last_depth = None
+        last_wall_height = None
         for i in range(0, RAYS_AMOUNT):
             ray_angle_x = player.vx + (i - RAYS_AMOUNT // 2) * OFFSET_ANGLE
             depth, obj_info = ray.cast(
@@ -59,13 +61,42 @@ class Drawing:
                 pixel_color = [
                     max(0, min(255, 255 - 255 * (depth / MAX_DEPTH)))
                 ] * 3
-                pygame.draw.rect(
-                    self.screen,
-                    pixel_color,
-                    (
-                        i * WIDTH // RAYS_AMOUNT - 1,
-                        (HEIGHT - wall_height) // 2,
-                        WIDTH // RAYS_AMOUNT + 1,
-                        wall_height
+
+                if last_depth is not None and \
+                   abs(depth - last_depth) < SMOTHING_THRESHOLD:
+                    pygame.draw.polygon(
+                        self.screen,
+                        pixel_color,
+                        (
+                            (
+                                i * WIDTH // RAYS_AMOUNT - 1,
+                                (HEIGHT - last_wall_height) // 2
+                            ),
+                            (
+                                (i + 1) * WIDTH // RAYS_AMOUNT,
+                                (HEIGHT - wall_height) // 2
+                            ),
+                            (
+                                (i + 1) * WIDTH // RAYS_AMOUNT,
+                                (HEIGHT - wall_height) // 2 + wall_height
+                            ),
+                            (
+                                i * WIDTH // RAYS_AMOUNT - 1,
+                                (HEIGHT - last_wall_height) // 2 + last_wall_height
+                            )
+                        )
                     )
-                )
+                else:
+                    pygame.draw.rect(
+                        self.screen,
+                        pixel_color,
+                        (
+                            i * WIDTH // RAYS_AMOUNT - 1,
+                            (HEIGHT - wall_height) // 2,
+                            WIDTH // RAYS_AMOUNT + 1,
+                            wall_height
+                        )
+                    )
+
+                last_depth = depth
+                last_wall_height = wall_height
