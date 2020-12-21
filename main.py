@@ -10,7 +10,7 @@ if __name__ == '__main__':
     pygame.init()
     pygame.display.set_caption('Cosmic Occasion')
 
-    size = width, height = 1280, 720
+    size = WIDTH, HEIGHT
     screen = pygame.display.set_mode(size)
 
     player = Player(100, 100)

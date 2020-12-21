@@ -8,18 +8,17 @@ from player import Player
 class Drawing:
     def __init__(self, screen):
         self.screen = screen
-        self.width, self.height = self.screen.get_size()
 
     def background(self):
         pygame.draw.rect(
             self.screen,
             (117, 187, 253),
-            (0, 0, self.width, self.height // 2)
+            (0, 0, WIDTH, HEIGHT // 2)
         )
         pygame.draw.rect(
             self.screen,
             (40, 25, 15),
-            (0, self.height // 2, self.width, self.height // 2)
+            (0, HEIGHT // 2, WIDTH, HEIGHT // 2)
         )
     
     def fps(self, clock):
@@ -29,7 +28,7 @@ class Drawing:
         self.screen.blit(
             text,
             (
-                self.width - text.get_size()[0] - 7,
+                WIDTH - text.get_size()[0] - 7,
                 0
             )
         )
@@ -42,7 +41,7 @@ class Drawing:
             depth, obj_info = ray.cast(
                 player.x,
                 player.y,
-                ray_angle_x,
+                ray_angle_x + 25,
                 player.vy
             )
             
@@ -58,16 +57,15 @@ class Drawing:
                     (depth + 0.0001)
 
                 pixel_color = [
-                    255 - 255 * (depth / MAX_DEPTH)
+                    max(0, min(255, 255 - 255 * (depth / MAX_DEPTH)))
                 ] * 3
-
                 pygame.draw.rect(
                     self.screen,
                     pixel_color,
                     (
-                        i * self.width // RAYS_AMOUNT - 1,
-                        (self.height - wall_height) // 2,
-                        self.width // RAYS_AMOUNT + 1,
+                        i * WIDTH // RAYS_AMOUNT - 1,
+                        (HEIGHT - wall_height) // 2,
+                        WIDTH // RAYS_AMOUNT + 1,
                         wall_height
                     )
                 )
