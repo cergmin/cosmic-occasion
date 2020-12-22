@@ -2,8 +2,7 @@ import pygame
 from math import tan, cos, radians
 from settings import *
 from ray import Ray
-from world import World
-from player import Player
+
 
 class Drawing:
     def __init__(self, screen):
@@ -40,7 +39,7 @@ class Drawing:
         last_wall_height = None
         for i in range(0, RAYS_AMOUNT):
             ray_angle_x = player.vx + (i - RAYS_AMOUNT // 2) * OFFSET_ANGLE
-            depth, obj_info = ray.cast(
+            depth, ray_offset, obj_info = ray.cast(
                 player.x,
                 player.y,
                 ray_angle_x + 25,
@@ -100,3 +99,21 @@ class Drawing:
 
                 last_depth = depth
                 last_wall_height = wall_height
+            elif obj_info['type'] == 'TexturedWall':
+                # Высота проекции стены на экран
+                wall_height = 5 * (dist * obj_info['height']) // \
+                              (depth + 0.0001)
+
+                ray_offset = int(ray_offset) % TILE_SIZE
+
+                texture_width, texture_height = obj_info['texture'].get_size()
+                texture_scale_x = texture_width // TILE_SIZE
+                texture_scale_y = texture_height // TILE_SIZE
+
+                wall_column = obj_info['texture'].subsurface(ray_offset * texture_scale_x, 0, texture_scale_x, texture_height)
+                wall_column = pygame.transform.scale(wall_column, (WIDTH // RAYS_AMOUNT, int(wall_height)))
+                self.screen.blit(wall_column, (i * (WIDTH // RAYS_AMOUNT), (HEIGHT - wall_height) // 2))
+
+                pixel_color = [
+                                  max(0, min(255, 255 - 255 * (depth / MAX_DEPTH)))
+                              ] * 3

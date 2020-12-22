@@ -1,3 +1,4 @@
+import pygame
 from settings import *
 
 
@@ -10,9 +11,10 @@ class World:
             for j, obj_char in enumerate(row):
                 if obj_char == 'w':
                     self.objects.add(
-                        Wall(
+                        TexturedWall(
                             TILE_SIZE * j,
-                            TILE_SIZE * i
+                            TILE_SIZE * i,
+                            'images/wall.jpg'
                         )
                     )
                 elif obj_char == '.':
@@ -28,16 +30,24 @@ class WorldObject:
         self.x = x
         self.y = y
         self.hight = hight
-    
-    def get_info(self):
-        return {
+        self.info = {
             'type': type(self).__name__,
             'x': self.x,
             'y': self.y,
             'height': self.hight
         }
 
+    def get_info(self):
+        return self.info
+
 
 class Wall(WorldObject):
     def __init__(self, x, y):
         super().__init__(x, y, 100)
+
+
+class TexturedWall(Wall):
+    def __init__(self, x, y, texture):
+        super().__init__(x, y)
+        self.texture = pygame.image.load(texture).convert()
+        self.info['texture'] = self.texture

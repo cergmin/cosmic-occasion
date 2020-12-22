@@ -25,6 +25,7 @@ class Ray:
         for n in range(RAYS_AMOUNT):
             # Пересечения с вертикалями
             obj_info_x = {'type': 'none'}
+            offset_y = 0
             if cur_angle_cos >= 0:
                 ray_x = xm + TILE_SIZE
                 dx = 1
@@ -35,6 +36,7 @@ class Ray:
             for i in range(0, WIDTH, TILE_SIZE):
                 depth_x = (ray_x - x) / cur_angle_cos
                 ray_y = y + depth_x * cur_angle_sin
+                offset_y = y + depth_x * cur_angle_sin
 
                 ray_collided = False
                 for obj in self.world.objects:
@@ -49,16 +51,18 @@ class Ray:
             
             # Пересечения с горизонталями
             obj_info_y = {'type': 'none'}
+            offset_x = 0
             if cur_angle_sin >= 0:
                 ray_y = ym + TILE_SIZE
                 dy = 1
             else:
                 ray_y = ym
                 dy = -1
-            
+
             for i in range(0, HEIGHT, TILE_SIZE):
                 depth_y = (ray_y - y) / cur_angle_sin
                 ray_x = x + depth_y * cur_angle_cos
+                offset_x = x + depth_y * cur_angle_cos
 
                 ray_collided = False
                 for obj in self.world.objects:
@@ -70,36 +74,20 @@ class Ray:
                 if ray_collided:
                     break
                 ray_y += dy * TILE_SIZE
-            
+
             if depth_x < depth_y:
                 depth = depth_x
+                offset = offset_y
                 obj_info = obj_info_x
             else:
                 depth = depth_y
+                offset = offset_x
                 obj_info = obj_info_y
+
+            # print(offset_x % TILE_SIZE, offset_y % TILE_SIZE)
 
             return (
                 depth,
+                offset,
                 obj_info
             )
-
-    # cast без оптимизации
-    # def cast(self, x, y, vx, vy):
-    #     for ray_length in range(0, MAX_DEPTH, RAY_STEP):
-    #         ray_x = self.player.x + cos(radians(vx)) * ray_length
-    #         ray_y = self.player.y + sin(radians(vx)) * ray_length
-
-    #         for obj in self.world.objects:
-    #             if (ray_x // TILE_SIZE, ray_y // TILE_SIZE) == \
-    #                (obj.x // TILE_SIZE, obj.y // TILE_SIZE):
-    #                 return (
-    #                     ray_length,
-    #                     obj.get_info()
-    #                 )
-
-    #     return (
-    #         MAX_DEPTH,
-    #         {
-    #             'type': 'None'
-    #         }
-    #     )
