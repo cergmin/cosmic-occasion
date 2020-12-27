@@ -7,8 +7,6 @@ from ray import Ray
 class Drawing:
     def __init__(self, screen):
         self.screen = screen
-        self.menu_running = True
-        self.menu_picture = pygame.transform.scale(pygame.image.load('images/menu.jpg').convert(), (WIDTH, HEIGHT))
         self.clock = pygame.time.Clock()
 
     def background(self):
@@ -118,7 +116,8 @@ class Drawing:
                 self.screen.blit(wall_column, (i * (WIDTH // RAYS_AMOUNT), (HEIGHT - wall_height) // 2))
 
     def menu(self):
-
+        self.menu_running = True
+        self.menu_picture = pygame.transform.scale(pygame.image.load('images/menu.jpg').convert(), (WIDTH, HEIGHT))
         button_font = pygame.font.Font('font/guardiane.ttf', WIDTH // 30)
         name_font = pygame.font.Font('font/guardianlai.ttf', WIDTH // 13)
         size_name = name_font.size("COSMIC OCCASION")
@@ -172,3 +171,15 @@ class Drawing:
 
             self.clock.tick(60)
             pygame.display.flip()
+
+    def aim(self):
+        pygame.draw.rect(
+            self.screen,
+            (0, 0, 0),
+            (WIDTH // 2 - 2, HEIGHT // 2 - 2, 14, 14)
+        )
+        pygame.draw.rect(
+            self.screen,
+            (255, 255, 255),
+            (WIDTH // 2, HEIGHT // 2, 10, 10)
+        )

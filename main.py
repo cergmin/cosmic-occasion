@@ -27,8 +27,8 @@ if __name__ == '__main__':
     draw.menu()
     running = True
     pygame.event.set_grab(True)
-    pygame.mouse.set_visible(False)
     clock = pygame.time.Clock()
+    pygame.mouse.set_visible(False)
     while running:
         tick = clock.tick() / 1000
         for event in pygame.event.get():
@@ -63,23 +63,16 @@ if __name__ == '__main__':
             player.vx += 80 * tick
         if keys[pygame.K_ESCAPE]:
             running = False
-
+        if keys[pygame.K_m]:
+            pygame.mouse.set_visible(True)
+            pygame.mouse.set_pos(WIDTH // 2, HEIGHT // 2)
+            draw.menu()
+            pygame.mouse.set_visible(False)
         draw.background()
         draw.world(world, player)
         draw.fps(clock)
 
-        # Рисование прицела
-        pygame.draw.rect(
-            screen,
-            (0, 0, 0),
-            (WIDTH // 2 - 2, HEIGHT // 2 - 2, 14, 14)
-        )
-        pygame.draw.rect(
-            screen,
-            (255, 255, 255),
-            (WIDTH // 2, HEIGHT // 2, 10, 10)
-        )
-
+        draw.aim()
         pygame.display.flip()
 
     pygame.quit()
