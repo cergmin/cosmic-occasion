@@ -24,7 +24,7 @@ if __name__ == '__main__':
     ])
 
     draw = Drawing(screen)
-
+    draw.menu()
     running = True
     pygame.event.set_grab(True)
     pygame.mouse.set_visible(False)
@@ -34,9 +34,9 @@ if __name__ == '__main__':
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            
+
             if event.type == pygame.MOUSEMOTION:
-                # Если mouse.get_visible() = Fals и event.set_grab(True),
+                # Если mouse.get_visible() = False и event.set_grab(True),
                 # то метод mouse.set_pos(...) не работает
                 if pygame.mouse.get_visible():
                     player.vx += (event.pos[0] - WIDTH // 2) * (1 / SENSITIVITY)
