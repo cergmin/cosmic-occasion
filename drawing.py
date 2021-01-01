@@ -4,6 +4,162 @@ from settings import *
 from ray import Ray
 
 
+class ElementUI:
+    def __init__(self, x, y, width, height):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+    
+    def get_rect(self):
+        return pygame.Rect(
+            self.x,
+            self.y,
+            self.width,
+            self.height,
+        )
+    
+    def is_hower(self, cursor_x, cursor_y):
+        return (self.x <= cursor_x <= self.x + self.width) and \
+               (self.y <= cursor_y <= self.y + self.height)
+
+    def draw(self, surface):
+        pygame.draw.rect(
+            surface,
+            (255, 0, 0),
+            self.get_rect()
+        )
+
+
+class Button(ElementUI):
+    def __init__(self, x, y, width, height,
+                 img_start, img_between,
+                 img_middle, img_end,
+                 img_start_hover, img_between_hover,
+                 img_middle_hover, img_end_hover,
+                 img_start_clicked, img_between_clicked,
+                 img_middle_clicked, img_end_clicked,
+                 text='', text_color=(255, 255, 255),
+                 text_color_hover=None,
+                 text_color_clicked=None,
+                 font=None):
+        super().__init__(x, y, width, height)
+        
+        self.text = text
+        self.text_color = {
+            'normal': text_color,
+            'hover': text_color,
+            'clicked': text_color
+        }
+
+        if text_color_hover is not None:
+            self.text_color['hover'] = text_color_hover
+
+        if text_color_clicked is not None:
+            self.text_color['clicked'] = text_color_clicked
+
+        if font is None:
+            self.font = pygame.font.SysFont('Arial', round(self.height * 0.5))
+        else:
+            self.font = font
+        self.img = {
+            'normal_start': img_start,
+            'normal_between': img_between,
+            'normal_middle': img_middle,
+            'normal_end': img_end,
+            'hover_start': img_start_hover,
+            'hover_between': img_between_hover,
+            'hover_middle': img_middle_hover,
+            'hover_end': img_end_hover,
+            'clicked_start': img_start_clicked,
+            'clicked_between': img_between_clicked,
+            'clicked_middle': img_middle_clicked,
+            'clicked_end': img_end_clicked
+        }
+
+        self.states_list = [
+            'normal',
+            'hover',
+            'clicked',
+        ]
+        self.state = self.states_list[0]
+    
+    def set_state(self, state):
+        state = str(state).lower()
+        if state not in self.states_list:
+            self.state = self.states_list[0]
+        else:
+            self.state = state
+
+    def draw(self, surface):
+        img_w = {}
+
+        for i in filter(
+            lambda x: x.startswith(self.state + '_'),
+            self.img
+        ):
+            img_w[i.split('_')[-1]] = max(1,
+                round(
+                    self.img[i].get_size()[0] * \
+                    (self.height / self.img[i].get_size()[1])
+                )
+            )
+
+        img_amount = [
+            ['start', min(img_w['start'], self.width // 2)],
+            ['between', 0],
+            ['middle', 0],
+            ['between', 0],
+            ['end', min(img_w['end'], self.width // 2)]
+        ]
+
+        img_amount[1][1] = self.width - \
+                           (img_amount[0][1] + img_amount[4][1])
+        
+        if img_amount[1][1] >= img_w['middle']:
+            img_amount[2][1] = img_w['middle']
+            img_amount[1][1] -= img_w['middle']
+        
+        if img_amount[1][1] % 2:
+            img_amount[3][1] = 1
+        
+        img_amount[1][1] = img_amount[1][1] // 2
+        img_amount[3][1] = img_amount[1][1]
+
+        x_offset = 0
+        for i in img_amount:
+            scaled_img = pygame.transform.scale(
+                self.img[self.state + '_' + i[0]],
+                (
+                    i[1],
+                    self.height
+                )
+            )
+
+            surface.blit(
+                scaled_img,
+                (
+                    self.x + x_offset,
+                    self.y
+                )
+            )
+
+            x_offset += i[1]
+        
+        text_surface = self.font.render(
+            self.text,
+            True,
+            self.text_color[self.state]
+        )
+        surface.blit(
+            text_surface,
+            (
+                self.x + (self.width - text_surface.get_size()[0]) // 2,
+                self.y + (self.height - text_surface.get_size()[1]) // 2
+            )
+        )
+
+
 class Drawing:
     def __init__(self, screen):
         self.screen = screen
@@ -135,60 +291,103 @@ class Drawing:
 
     def menu(self):
         self.menu_running = True
-        self.menu_picture = pygame.transform.scale(pygame.image.load('images/menu.jpg').convert(), (WIDTH, HEIGHT))
-        button_font = pygame.font.Font('font/guardiane.ttf', WIDTH // 30)
-        name_font = pygame.font.Font('font/guardianlai.ttf', WIDTH // 13)
-        size_name = name_font.size("COSMIC OCCASION")
+        pygame.event.set_grab(False)
 
-        button_start = pygame.Rect(0, 0, WIDTH // 4, HEIGHT // 5)
-        button_start.center = WIDTH // 2, HEIGHT // 2
-        size_start = button_font.size('START')
+        button_resources = [
+            pygame.image.load('images/button/normal/start.png').convert_alpha(),
+            pygame.image.load('images/button/normal/between.png').convert_alpha(),
+            pygame.image.load('images/button/normal/middle.png').convert_alpha(),
+            pygame.image.load('images/button/normal/end.png').convert_alpha(),
+            pygame.image.load('images/button/hover/start.png').convert_alpha(),
+            pygame.image.load('images/button/hover/between.png').convert_alpha(),
+            pygame.image.load('images/button/hover/middle.png').convert_alpha(),
+            pygame.image.load('images/button/hover/end.png').convert_alpha(),
+            pygame.image.load('images/button/clicked/start.png').convert_alpha(),
+            pygame.image.load('images/button/clicked/between.png').convert_alpha(),
+            pygame.image.load('images/button/clicked/middle.png').convert_alpha(),
+            pygame.image.load('images/button/clicked/end.png').convert_alpha()
+        ]
 
-        button_exit = pygame.Rect(0, 0, WIDTH // 4, HEIGHT // 5)
-        button_exit.center = WIDTH // 2, HEIGHT // 2 + HEIGHT // 4
-        size_exit = button_font.size('EXIT')
+        button_text_attributes = {
+            'text_color': (171, 242, 255),
+            'text_color_hover': (194, 244, 255),
+            'text_color_clicked': (143, 201, 213),
+            'font': pygame.font.Font('font/guardiane.ttf', 40)
+        }
+
+        start_button = Button(
+            WIDTH // 2 - 210, 250, 420, 100,
+            *button_resources,
+            **button_text_attributes,
+            text='start'
+        )
+
+        settings_button = Button(
+            WIDTH // 2 - 210, 370, 420, 100,
+            *button_resources,
+            **button_text_attributes,
+            text='settings'
+        )
+
+        exit_button = Button(
+            WIDTH // 2 - 210, 490, 420, 100,
+            *button_resources,
+            **button_text_attributes,
+            text='exit'
+        )
+
+        title_font = pygame.font.Font('font/guardianlai.ttf', WIDTH // 13)
+        title = title_font.render('COSMIC OCCASION', True, (255, 255, 255))
+
+        background_image = pygame.transform.scale(
+            pygame.image.load('images/menu.jpg').convert(),
+            (WIDTH, HEIGHT)
+        )
+
+        mouse_state = [False, -1]  # [is_clicked, btn_id]
 
         while self.menu_running:
-            start_font = button_font.render('START', True, pygame.Color('white'))
-            exit_font = button_font.render('EXIT', True, pygame.Color('white'))
-
             for event in pygame.event.get():
-                if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
+                if event.type == pygame.QUIT:
                     pygame.quit()
-            self.screen.blit(self.menu_picture, (0, 0))
+                    exit(0)
 
-            pygame.draw.rect(self.screen, pygame.Color("black"), button_start, border_radius=30)
-            pygame.draw.rect(self.screen, pygame.Color("white"), button_start, border_radius=30, width=10)
-            self.screen.blit(start_font,
-                             (button_start.centerx - size_start[0] / 2, button_start.centery - size_start[1] / 2))
+            self.screen.blit(background_image, (0, 0))
 
-            pygame.draw.rect(self.screen, pygame.Color("black"), button_exit, border_radius=30)
-            pygame.draw.rect(self.screen, pygame.Color("white"), button_exit, border_radius=30, width=10)
-            self.screen.blit(exit_font,
-                             (button_exit.centerx - size_exit[0] / 2, button_exit.centery - size_exit[1] / 2))
+            self.screen.blit(
+                title,
+                (
+                    (WIDTH - title.get_size()[0]) // 2, 
+                    (200 - title.get_size()[1]) // 2
+                )
+            )
 
-            name = name_font.render('COSMIC OCCASION', True, pygame.Color("white"))
-            self.screen.blit(name, (WIDTH // 2 - size_name[0] / 2, HEIGHT // 4 - size_name[0] / 8))
-
-            if button_start.collidepoint(pygame.mouse.get_pos()):
-                start_font = button_font.render('START', True, pygame.Color('black'))
-                pygame.draw.rect(self.screen, pygame.Color("white"), button_start, border_radius=30)
-                pygame.draw.rect(self.screen, pygame.Color("black"), button_start, border_radius=30, width=10)
-                self.screen.blit(start_font,
-                                 (button_start.centerx - size_start[0] / 2, button_start.centery - size_start[1] / 2))
-                if pygame.mouse.get_pressed(3)[0]:
+            for btn in [start_button, settings_button, exit_button]:
+                if btn.is_hower(*pygame.mouse.get_pos()):
+                    if pygame.mouse.get_pressed(3)[0]:
+                        btn.set_state('clicked')
+                        mouse_state[1] = id(btn)
+                    else:
+                        btn.set_state('hover')
+                else:
+                    btn.set_state('normal')
+                btn.draw(self.screen)
+            
+            mouse_state[0] = pygame.mouse.get_pressed(3)[0]
+            if not mouse_state[0]:
+                if mouse_state[1] == id(start_button):
                     self.menu_running = False
-            elif button_exit.collidepoint(pygame.mouse.get_pos()):
-                exit_font = button_font.render('EXIT', True, pygame.Color('black'))
-                pygame.draw.rect(self.screen, pygame.Color("white"), button_exit, border_radius=30)
-                pygame.draw.rect(self.screen, pygame.Color("black"), button_exit, border_radius=30, width=10)
-                self.screen.blit(exit_font,
-                                 (button_exit.centerx - size_exit[0] / 2, button_exit.centery - size_exit[1] / 2))
-                if pygame.mouse.get_pressed(3)[0]:
+                elif mouse_state[1] == id(settings_button):
+                    print('settings')
+                elif mouse_state[1] == id(exit_button):
                     pygame.quit()
+                    exit(0)
+
+                mouse_state[1] = -1
 
             self.clock.tick(60)
             pygame.display.flip()
+        pygame.event.set_grab(True)
 
     def aim(self):
         pygame.draw.rect(

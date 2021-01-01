@@ -62,8 +62,6 @@ if __name__ == '__main__':
         if keys[pygame.K_RIGHT]:
             player.vx += 80 * tick
         if keys[pygame.K_ESCAPE]:
-            running = False
-        if keys[pygame.K_m]:
             pygame.mouse.set_visible(True)
             pygame.mouse.set_pos(WIDTH // 2, HEIGHT // 2)
             draw.menu()
