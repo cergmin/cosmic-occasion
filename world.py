@@ -9,7 +9,14 @@ class World:
 
         for i, row in enumerate(self.map):
             for j, obj_char in enumerate(row):
-                if obj_char == 'w':
+                if obj_char == 'W':
+                    self.objects.add(
+                        Wall(
+                            TILE_SIZE * j,
+                            TILE_SIZE * i
+                        )
+                    )
+                elif obj_char == 'w':
                     self.objects.add(
                         TexturedWall(
                             TILE_SIZE * j,
@@ -26,15 +33,13 @@ class World:
 
 
 class WorldObject:
-    def __init__(self, x, y, hight):
+    def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.hight = hight
         self.info = {
             'type': type(self).__name__,
             'x': self.x,
-            'y': self.y,
-            'height': self.hight
+            'y': self.y
         }
 
     def get_info(self):
@@ -43,7 +48,7 @@ class WorldObject:
 
 class Wall(WorldObject):
     def __init__(self, x, y):
-        super().__init__(x, y, 100)
+        super().__init__(x, y)
 
 
 class TexturedWall(Wall):

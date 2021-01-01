@@ -36,84 +36,102 @@ class Drawing:
     def world(self, world, player):
         ray = Ray(world, player)
 
-        last_depth = None
-        last_wall_height = None
-        for i in range(0, RAYS_AMOUNT):
-            ray_angle_x = player.vx + (i - RAYS_AMOUNT // 2) * OFFSET_ANGLE
+        for i in range(RAYS_AMOUNT):
+            ray_angle_x = player.vx + i * OFFSET_ANGLE - FOV / 2
             depth, ray_offset, obj_info = ray.cast(
                 player.x,
                 player.y,
-                ray_angle_x + 25,
+                ray_angle_x,
                 player.vy
             )
 
             # Исправление эффекта рыбьего глаза
             depth *= cos(radians(player.vx - ray_angle_x))
 
-            # Расстояние от игрока до экрана
-            dist = RAYS_AMOUNT / (2 * tan(radians(FOV / 2)))
-
             if obj_info['type'] == 'Wall':
                 # Высота проекции стены на экран
-                wall_height = 5 * (dist * obj_info['height']) // \
+                wall_height = 5 * (DIST * TILE_SIZE) // \
                               (depth + 0.0001)
 
                 pixel_color = [
-                                  max(0, min(255, 255 - 255 * (depth / MAX_DEPTH)))
-                              ] * 3
-
-                if last_depth is not None and \
-                        abs(depth - last_depth) < SMOTHING_THRESHOLD:
-                    pygame.draw.polygon(
-                        self.screen,
-                        pixel_color,
-                        (
-                            (
-                                i * WIDTH // RAYS_AMOUNT - 1,
-                                (HEIGHT - last_wall_height) // 2
-                            ),
-                            (
-                                (i + 1) * WIDTH // RAYS_AMOUNT,
-                                (HEIGHT - wall_height) // 2
-                            ),
-                            (
-                                (i + 1) * WIDTH // RAYS_AMOUNT,
-                                (HEIGHT - wall_height) // 2 + wall_height
-                            ),
-                            (
-                                i * WIDTH // RAYS_AMOUNT - 1,
-                                (HEIGHT - last_wall_height) // 2 + last_wall_height
-                            )
+                    max(
+                        0,
+                        min(
+                            255,
+                            255 - 255 * (depth / MAX_DEPTH)
                         )
                     )
-                else:
-                    pygame.draw.rect(
-                        self.screen,
-                        pixel_color,
-                        (
-                            i * WIDTH // RAYS_AMOUNT - 1,
-                            (HEIGHT - wall_height) // 2,
-                            WIDTH // RAYS_AMOUNT + 1,
-                            wall_height
-                        )
-                    )
+                ] * 3
 
-                last_depth = depth
-                last_wall_height = wall_height
+                pygame.draw.rect(
+                    self.screen,
+                    pixel_color,
+                    (
+                        i * WIDTH // RAYS_AMOUNT - 1,
+                        (HEIGHT - wall_height) // 2,
+                        WIDTH // RAYS_AMOUNT + 1,
+                        wall_height
+                    )
+                )
             elif obj_info['type'] == 'TexturedWall':
-                # Высота проекции стены на экран
-                wall_height = 5 * (dist * obj_info['height']) // \
-                              (depth + 0.0001)
-
-                ray_offset = int(ray_offset) % TILE_SIZE
-
                 texture_width, texture_height = obj_info['texture'].get_size()
                 texture_scale_x = texture_width // TILE_SIZE
 
-                wall_column = obj_info['texture'].subsurface(ray_offset * texture_scale_x, 0, texture_scale_x,
-                                                             texture_height)
-                wall_column = pygame.transform.scale(wall_column, (WIDTH // RAYS_AMOUNT, int(wall_height)))
-                self.screen.blit(wall_column, (i * (WIDTH // RAYS_AMOUNT), (HEIGHT - wall_height) // 2))
+                # Высота проекции стены на экран
+                wall_height = 5 * (DIST * TILE_SIZE) // \
+                              (depth + 0.0001)
+
+                tile_scale = DIST / (depth + 0.0001)
+                tile_scale = max(1, tile_scale)
+
+                wall_column = obj_info['texture']
+
+                # Вырезаем из текстуры столб пикселей
+                wall_column = wall_column.subsurface(
+                    round(ray_offset * texture_scale_x),
+                    0,
+                    texture_scale_x,
+                    texture_height
+                )
+
+                # Растягиваем стоб пикселей в ширину,
+                # чтобы не было видно стыков,
+                # когда мы близко подходим к стене
+                wall_column = pygame.transform.scale(
+                    wall_column,
+                    (
+                        round(texture_scale_x * tile_scale),
+                        texture_height
+                    )
+                )
+
+                # Вырезаем из растянутой текстуры фрагмент,
+                # с постоянным соотношением сторон
+                wall_column = wall_column.subsurface(
+                    0,
+                    0,
+                    texture_scale_x,
+                    texture_height
+                )
+
+                # Растягиваем фрагмент текстуры,
+                # чтобы он поместился на экран
+                wall_column = pygame.transform.scale(
+                    wall_column,
+                    (
+                        WIDTH // RAYS_AMOUNT,
+                        int(wall_height)
+                    )
+                )
+
+                # Выводим фрагмент текстуры на экран
+                self.screen.blit(
+                    wall_column,
+                    (
+                        i * (WIDTH // RAYS_AMOUNT),
+                        (HEIGHT - wall_height) // 2
+                    )
+                )
 
     def menu(self):
         self.menu_running = True
