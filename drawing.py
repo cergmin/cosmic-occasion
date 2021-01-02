@@ -168,11 +168,6 @@ class Drawing:
     def __init__(self, screen, ic):
         self.screen = screen
         self.ic = ic
-        self.clock = pygame.time.Clock()
-        self.gun_ic = self.ic
-        self.gun_count = 0
-        for i in range(11):
-            self.gun_ic.load(f"images/gun/{i}.png", i, True)
 
     def background(self):
         pygame.draw.rect(
@@ -298,8 +293,8 @@ class Drawing:
                 )
 
     def menu(self):
+        clock = pygame.time.Clock()
         self.menu_running = True
-
 
         button_resources = []
         for folder in ['normal', 'hover', 'clicked']:
@@ -386,38 +381,32 @@ class Drawing:
 
                 mouse_state[1] = -1
 
-            self.clock.tick(60)
+            clock.tick(60)
             pygame.display.flip()
 
-    def aim(self, triggered):
-        self.triggered = triggered
+    def aim(self, color):
         pygame.draw.rect(
             self.screen,
             (0, 0, 0),
             (WIDTH // 2 - 2, HEIGHT // 2 - 2, 14, 14)
         )
-        if self.triggered:
-            color = (255, 0, 0)
-        else:
-            color = (255, 255, 255)
         pygame.draw.rect(
             self.screen,
             color,
             (WIDTH // 2, HEIGHT // 2, 10, 10)
         )
 
-    def gun(self, shot):
-        base_gun = pygame.transform.scale(pygame.image.load("images/gun/0.png").convert_alpha(), (HEIGHT, HEIGHT))
-        self.shot = shot
-        if self.shot:
-            print(self.clock.tick())
-            gun_seq = pygame.transform.scale(self.gun_ic.get(self.gun_count), (HEIGHT, HEIGHT))
-            self.screen.blit(gun_seq, (WIDTH // 2.5, 50))
-            self.gun_count += 1
-            if self.gun_count == 10:
-                self.gun_count = 0
-                return True
-
-        else:
-            self.gun_count = 0
-            self.screen.blit(base_gun, (WIDTH // 2.5, 50))
+    def weapon(self, weapon):
+        img = pygame.transform.scale(
+            self.ic.get(
+                weapon.animations[weapon.state[0]][0][weapon.state[1]]
+            ),
+            (HEIGHT, HEIGHT)
+        )
+        self.screen.blit(
+            img,
+            (
+                WIDTH - img.get_size()[0],
+                HEIGHT - img.get_size()[1] / 1.2
+            )
+        )

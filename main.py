@@ -2,7 +2,7 @@ import pygame
 from math import cos, sin, radians
 from settings import *
 from controllers import *
-from world import World
+from world import *
 from player import Player
 from drawing import Drawing
 from pygame.mixer import Sound
@@ -16,19 +16,6 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode(size)
 
     ic = ImageController()
-
-    player = Player(100, 100)
-    world = World([
-        ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w'],
-        ['w', '.', '.', '.', '.', '.', '.', 'w'],
-        ['w', 'w', 'w', 'w', '.', 'w', '.', 'w'],
-        ['w', '.', '.', 'w', '.', 'w', '.', 'w'],
-        ['w', '.', '.', 'w', '.', 'w', '.', 'w'],
-        ['w', '.', '.', 'w', '.', 'w', 'w', 'w'],
-        ['w', '.', '.', '.', '.', '.', '.', 'w'],
-        ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w']
-    ])
-
 
     draw = Drawing(screen, ic)
     clock = pygame.time.Clock()
@@ -55,17 +42,44 @@ if __name__ == '__main__':
         'wall'
     )
 
+    for i in range(11):
+        ic.load(
+            f'images/gun/{i}.png',
+            'gun_' + str(i),
+            alpha=True
+        )
+
     game_music = Sound('sounds/game.mp3')
     game_music.stop()
 
     menu_music = Sound('sounds/menu.mp3')
     menu_music.stop()
-    shot = False
+
+    player = Player(100, 100)
+    world = World([
+        ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w'],
+        ['w', '.', '.', '.', '.', '.', '.', 'w'],
+        ['w', 'w', 'w', 'w', '.', 'w', '.', 'w'],
+        ['w', '.', '.', 'w', '.', 'w', '.', 'w'],
+        ['w', '.', '.', 'w', '.', 'w', '.', 'w'],
+        ['w', '.', '.', 'w', '.', 'w', 'w', 'w'],
+        ['w', '.', '.', '.', '.', '.', '.', 'w'],
+        ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w']
+    ])
+    gun = Weapon(
+        ['gun_0'],
+        ['gun_' + str(i) for i in range(1, 11)],
+        'sounds/gun.mp3',
+        shot_duration=0.3
+    )
+
+    aim_color = (255, 255, 255)
     menu_opened = True
     running = True
     while running:
-        triggered = False
         tick = clock.tick() / 1000
+        
+        aim_color = (255, 255, 255)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -78,11 +92,13 @@ if __name__ == '__main__':
                     pygame.mouse.set_pos(WIDTH // 2, HEIGHT // 2)
                 else:
                     player.vx += event.rel[0] * (1 / SENSITIVITY)
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    Sound("sounds/gun.mp3").play()
-                    shot = True
-                    triggered = True
+                    gun.sound.play()
+                    gun.set_state('shot')
+                    aim_color = (255, 0, 0)
+
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
             player.x += player.speed * cos(radians(player.vx)) * tick
@@ -129,9 +145,10 @@ if __name__ == '__main__':
         draw.background()
         draw.world(world, player)
         draw.fps(clock)
-        if draw.gun(shot):
-            shot = False
-        draw.aim(triggered)
-        pygame.display.flip()
+        draw.aim(aim_color)
+        
+        gun.update(tick)
+        draw.weapon(gun)
 
+        pygame.display.flip()
     pygame.quit()
