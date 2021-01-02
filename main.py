@@ -42,14 +42,14 @@ if __name__ == '__main__':
                 alpha=True,
                 max_height=100
             )
-    
+
     ic.load(
         'images/menu.jpg',
         'menu_background',
         max_width=WIDTH,
         max_height=HEIGHT
     )
-    
+
     ic.load(
         'images/wall.jpg',
         'wall'
@@ -57,13 +57,14 @@ if __name__ == '__main__':
 
     game_music = Sound('sounds/game.mp3')
     game_music.stop()
-    
+
     menu_music = Sound('sounds/menu.mp3')
     menu_music.stop()
-
-    menu_oppend = True
+    shot = False
+    menu_opened = True
     running = True
     while running:
+        triggered = False
         tick = clock.tick() / 1000
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -77,7 +78,11 @@ if __name__ == '__main__':
                     pygame.mouse.set_pos(WIDTH // 2, HEIGHT // 2)
                 else:
                     player.vx += event.rel[0] * (1 / SENSITIVITY)
-
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    Sound("sounds/gun.mp3").play()
+                    shot = True
+                    triggered = True
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
             player.x += player.speed * cos(radians(player.vx)) * tick
@@ -96,9 +101,9 @@ if __name__ == '__main__':
         if keys[pygame.K_RIGHT]:
             player.vx += 80 * tick
         if keys[pygame.K_ESCAPE]:
-            menu_oppend = True
+            menu_opened = True
 
-        if menu_oppend:
+        if menu_opened:
             # Показываем и "отпускаем" курсор
             pygame.mouse.set_visible(True)
             pygame.event.set_grab(False)
@@ -119,13 +124,14 @@ if __name__ == '__main__':
             game_music.play(loops=-1)
             menu_music.stop()
 
-            menu_oppend = False
+            menu_opened = False
 
         draw.background()
         draw.world(world, player)
         draw.fps(clock)
-
-        draw.aim()
+        if draw.gun(shot):
+            shot = False
+        draw.aim(triggered)
         pygame.display.flip()
 
     pygame.quit()
