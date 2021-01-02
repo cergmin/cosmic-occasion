@@ -2,7 +2,7 @@ import pygame
 from math import tan, cos, radians
 from settings import *
 from ray import Ray
-from pygame import mixer
+from pygame.mixer import Sound
 
 
 class ElementUI:
@@ -97,15 +97,16 @@ class Button(ElementUI):
         img_w = {}
 
         for i in filter(
-                lambda x: x.startswith(self.state + '_'),
-                self.img
+            lambda x: x.startswith(self.state + '_'),
+            self.img
         ):
-            img_w[i.split('_')[-1]] = max(1,
-                                          round(
-                                              self.img[i].get_size()[0] * \
-                                              (self.height / self.img[i].get_size()[1])
-                                          )
-                                          )
+            img_w[i.split('_')[-1]] = max(
+                1,
+                round(
+                    self.img[i].get_size()[0] * \
+                    (self.height / self.img[i].get_size()[1])
+                )
+            )
 
         img_amount = [
             ['start', min(img_w['start'], self.width // 2)],
@@ -212,14 +213,14 @@ class Drawing:
                               (depth + 0.0001)
 
                 pixel_color = [
-                                  max(
-                                      0,
-                                      min(
-                                          255,
-                                          255 - 255 * (depth / MAX_DEPTH)
-                                      )
-                                  )
-                              ] * 3
+                    max(
+                        0,
+                        min(
+                            255,
+                            255 - 255 * (depth / MAX_DEPTH)
+                        )
+                    )
+                ] * 3
 
                 pygame.draw.rect(
                     self.screen,
@@ -292,11 +293,7 @@ class Drawing:
                 )
 
     def menu(self):
-        mixer.music.load("sounds/menu.mp3")
-        mixer.music.play(-1)
-
         self.menu_running = True
-        pygame.event.set_grab(False)
 
         button_resources = [
             pygame.image.load('images/button/normal/start.png').convert_alpha(),
@@ -350,7 +347,6 @@ class Drawing:
         )
 
         mouse_state = [False, -1]  # [is_clicked, btn_id]
-        button_hover = True
         while self.menu_running:
 
             for event in pygame.event.get():
@@ -379,14 +375,14 @@ class Drawing:
                 btn.draw(self.screen)
             mouse_state[0] = pygame.mouse.get_pressed(3)[0]
             if not mouse_state[0]:
+                if mouse_state[1] != -1:
+                    Sound("sounds/button_pressed.mp3").play()
+
                 if mouse_state[1] == id(start_button):
-                    mixer.Sound("sounds/button_pressed.mp3").play()
                     self.menu_running = False
                 elif mouse_state[1] == id(settings_button):
-                    mixer.Sound("sounds/button_pressed.mp3").play()
                     print('settings')
                 elif mouse_state[1] == id(exit_button):
-                    mixer.Sound("sounds/button_pressed.mp3").play()
                     pygame.quit()
                     exit(0)
 
@@ -394,7 +390,6 @@ class Drawing:
 
             self.clock.tick(60)
             pygame.display.flip()
-        pygame.event.set_grab(True)
 
     def aim(self):
         pygame.draw.rect(

@@ -4,7 +4,7 @@ from settings import *
 from world import World
 from player import Player
 from drawing import Drawing
-from pygame import mixer
+from pygame.mixer import Sound
 
 
 if __name__ == '__main__':
@@ -25,14 +25,17 @@ if __name__ == '__main__':
         ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w']
     ])
 
+    game_music = Sound('sounds/game.mp3')
+    game_music.stop()
+    
+    menu_music = Sound('sounds/menu.mp3')
+    menu_music.stop()
+
     draw = Drawing(screen)
-    draw.menu()
-    running = True
-    pygame.event.set_grab(True)
     clock = pygame.time.Clock()
-    pygame.mouse.set_visible(False)
-    mixer.music.load("sounds/game.mp3")
-    mixer.music.play(-1)
+
+    menu_oppend = True
+    running = True
     while running:
         tick = clock.tick() / 1000
         for event in pygame.event.get():
@@ -66,12 +69,31 @@ if __name__ == '__main__':
         if keys[pygame.K_RIGHT]:
             player.vx += 80 * tick
         if keys[pygame.K_ESCAPE]:
+            menu_oppend = True
+
+        if menu_oppend:
+            # Показываем и "отпускаем" курсор
             pygame.mouse.set_visible(True)
+            pygame.event.set_grab(False)
+
+            # Переключение фоновой музыки
+            game_music.stop()
+            menu_music.play(loops=-1)
+
+            # Установка курсора в центр и открытие меню
             pygame.mouse.set_pos(WIDTH // 2, HEIGHT // 2)
             draw.menu()
+
+            # Прячем и "захватываем" курсор
             pygame.mouse.set_visible(False)
-            mixer.music.load("sounds/game.mp3")
-            mixer.music.play(-1)
+            pygame.event.set_grab(True)
+
+            # Переключение фоновой музыки
+            game_music.play(loops=-1)
+            menu_music.stop()
+
+            menu_oppend = False
+
         draw.background()
         draw.world(world, player)
         draw.fps(clock)
