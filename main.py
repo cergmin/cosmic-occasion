@@ -4,6 +4,8 @@ from settings import *
 from world import World
 from player import Player
 from drawing import Drawing
+from pygame import mixer
+
 
 if __name__ == '__main__':
     pygame.init()
@@ -29,6 +31,8 @@ if __name__ == '__main__':
     pygame.event.set_grab(True)
     clock = pygame.time.Clock()
     pygame.mouse.set_visible(False)
+    mixer.music.load("sounds/game.mp3")
+    mixer.music.play(-1)
     while running:
         tick = clock.tick() / 1000
         for event in pygame.event.get():
@@ -66,6 +70,8 @@ if __name__ == '__main__':
             pygame.mouse.set_pos(WIDTH // 2, HEIGHT // 2)
             draw.menu()
             pygame.mouse.set_visible(False)
+            mixer.music.load("sounds/game.mp3")
+            mixer.music.play(-1)
         draw.background()
         draw.world(world, player)
         draw.fps(clock)

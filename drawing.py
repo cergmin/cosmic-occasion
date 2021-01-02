@@ -2,6 +2,7 @@ import pygame
 from math import tan, cos, radians
 from settings import *
 from ray import Ray
+from pygame import mixer
 
 
 class ElementUI:
@@ -10,7 +11,7 @@ class ElementUI:
         self.y = y
         self.width = width
         self.height = height
-    
+
     def get_rect(self):
         return pygame.Rect(
             self.x,
@@ -18,8 +19,9 @@ class ElementUI:
             self.width,
             self.height,
         )
-    
-    def is_hower(self, cursor_x, cursor_y):
+
+    def is_hover(self, cursor_x, cursor_y):
+
         return (self.x <= cursor_x <= self.x + self.width) and \
                (self.y <= cursor_y <= self.y + self.height)
 
@@ -44,7 +46,7 @@ class Button(ElementUI):
                  text_color_clicked=None,
                  font=None):
         super().__init__(x, y, width, height)
-        
+
         self.text = text
         self.text_color = {
             'normal': text_color,
@@ -83,7 +85,7 @@ class Button(ElementUI):
             'clicked',
         ]
         self.state = self.states_list[0]
-    
+
     def set_state(self, state):
         state = str(state).lower()
         if state not in self.states_list:
@@ -95,15 +97,15 @@ class Button(ElementUI):
         img_w = {}
 
         for i in filter(
-            lambda x: x.startswith(self.state + '_'),
-            self.img
+                lambda x: x.startswith(self.state + '_'),
+                self.img
         ):
             img_w[i.split('_')[-1]] = max(1,
-                round(
-                    self.img[i].get_size()[0] * \
-                    (self.height / self.img[i].get_size()[1])
-                )
-            )
+                                          round(
+                                              self.img[i].get_size()[0] * \
+                                              (self.height / self.img[i].get_size()[1])
+                                          )
+                                          )
 
         img_amount = [
             ['start', min(img_w['start'], self.width // 2)],
@@ -115,14 +117,14 @@ class Button(ElementUI):
 
         img_amount[1][1] = self.width - \
                            (img_amount[0][1] + img_amount[4][1])
-        
+
         if img_amount[1][1] >= img_w['middle']:
             img_amount[2][1] = img_w['middle']
             img_amount[1][1] -= img_w['middle']
-        
+
         if img_amount[1][1] % 2:
             img_amount[3][1] = 1
-        
+
         img_amount[1][1] = img_amount[1][1] // 2
         img_amount[3][1] = img_amount[1][1]
 
@@ -145,7 +147,7 @@ class Button(ElementUI):
             )
 
             x_offset += i[1]
-        
+
         text_surface = self.font.render(
             self.text,
             True,
@@ -210,14 +212,14 @@ class Drawing:
                               (depth + 0.0001)
 
                 pixel_color = [
-                    max(
-                        0,
-                        min(
-                            255,
-                            255 - 255 * (depth / MAX_DEPTH)
-                        )
-                    )
-                ] * 3
+                                  max(
+                                      0,
+                                      min(
+                                          255,
+                                          255 - 255 * (depth / MAX_DEPTH)
+                                      )
+                                  )
+                              ] * 3
 
                 pygame.draw.rect(
                     self.screen,
@@ -290,6 +292,9 @@ class Drawing:
                 )
 
     def menu(self):
+        mixer.music.load("sounds/menu.mp3")
+        mixer.music.play(-1)
+
         self.menu_running = True
         pygame.event.set_grab(False)
 
@@ -345,8 +350,9 @@ class Drawing:
         )
 
         mouse_state = [False, -1]  # [is_clicked, btn_id]
-
+        button_hover = True
         while self.menu_running:
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -357,13 +363,12 @@ class Drawing:
             self.screen.blit(
                 title,
                 (
-                    (WIDTH - title.get_size()[0]) // 2, 
+                    (WIDTH - title.get_size()[0]) // 2,
                     (200 - title.get_size()[1]) // 2
                 )
             )
-
             for btn in [start_button, settings_button, exit_button]:
-                if btn.is_hower(*pygame.mouse.get_pos()):
+                if btn.is_hover(*pygame.mouse.get_pos()):
                     if pygame.mouse.get_pressed(3)[0]:
                         btn.set_state('clicked')
                         mouse_state[1] = id(btn)
@@ -372,14 +377,16 @@ class Drawing:
                 else:
                     btn.set_state('normal')
                 btn.draw(self.screen)
-            
             mouse_state[0] = pygame.mouse.get_pressed(3)[0]
             if not mouse_state[0]:
                 if mouse_state[1] == id(start_button):
+                    mixer.Sound("sounds/button_pressed.mp3").play()
                     self.menu_running = False
                 elif mouse_state[1] == id(settings_button):
+                    mixer.Sound("sounds/button_pressed.mp3").play()
                     print('settings')
                 elif mouse_state[1] == id(exit_button):
+                    mixer.Sound("sounds/button_pressed.mp3").play()
                     pygame.quit()
                     exit(0)
 
