@@ -384,29 +384,19 @@ class Drawing:
             clock.tick(60)
             pygame.display.flip()
 
-    def aim(self, color):
-        pygame.draw.rect(
-            self.screen,
-            (0, 0, 0),
-            (WIDTH // 2 - 2, HEIGHT // 2 - 2, 14, 14)
-        )
-        pygame.draw.rect(
-            self.screen,
-            color,
-            (WIDTH // 2, HEIGHT // 2, 10, 10)
-        )
+    def aim(self, aim_trigger):
+        self.aim_trigger = aim_trigger
+        if self.aim_trigger:
+            aim_img = pygame.image.load("images/aim2.png")
+        else:
+            aim_img = pygame.image.load("images/aim1.png")
+        self.screen.blit(aim_img, ((WIDTH - aim_img.get_size()[0]) // 2, (HEIGHT - aim_img.get_size()[1]) // 2))
 
     def weapon(self, weapon):
         img = pygame.transform.scale(
             self.ic.get(
                 weapon.animations[weapon.state[0]][0][weapon.state[1]]
             ),
-            (HEIGHT, HEIGHT)
+            (WIDTH, HEIGHT)
         )
-        self.screen.blit(
-            img,
-            (
-                WIDTH - img.get_size()[0],
-                HEIGHT - img.get_size()[1] / 1.2
-            )
-        )
+        self.screen.blit(img, (0, 0))

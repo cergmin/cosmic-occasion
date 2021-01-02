@@ -44,11 +44,22 @@ if __name__ == '__main__':
 
     for i in range(11):
         ic.load(
-            f'images/gun/{i}.png',
+            f'images/gun/shoot/{i}.png',
             'gun_' + str(i),
             alpha=True
         )
-
+    for i in range(11):
+        ic.load(
+            f'images/gun/aim/{i}.png',
+            'aiming_' + str(i),
+            alpha=True
+        )
+    for i in range(11):
+        ic.load(
+            f'images/gun/aim_shoot/{i}.png',
+            'aimed_shot_' + str(i),
+            alpha=True
+        )
     game_music = Sound('sounds/game.mp3')
     game_music.stop()
 
@@ -67,13 +78,15 @@ if __name__ == '__main__':
         ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w']
     ])
     gun = Weapon(
-        ['gun_0'],
+        ['gun_0'], ['aimed_shot_0'],
         ['gun_' + str(i) for i in range(1, 11)],
+        ['aiming_' + str(i) for i in range(1, 11)],
+        ['aimed_shot_' + str(i) for i in range(1, 11)],
         'sounds/gun.mp3',
-        shot_duration=0.3
+        duration=0.3
     )
 
-    aim_color = (255, 255, 255)
+    aim_trigger = False
     menu_opened = True
     running = True
     while running:
@@ -97,7 +110,10 @@ if __name__ == '__main__':
                 if event.button == 1:
                     gun.sound.play()
                     gun.set_state('shot')
-                    aim_color = (255, 0, 0)
+                    aim_trigger = True
+                elif event.button == 3:
+                    gun.set_state('aiming')
+                    print("ass")
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
@@ -145,8 +161,8 @@ if __name__ == '__main__':
         draw.background()
         draw.world(world, player)
         draw.fps(clock)
-        draw.aim(aim_color)
-        
+        draw.aim(aim_trigger)
+        aim_trigger = False
         gun.update(tick)
         draw.weapon(gun)
 

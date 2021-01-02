@@ -59,8 +59,8 @@ class TexturedWall(Wall):
 
 
 class Weapon:
-    def __init__(self, normal, shot_animation,
-                 shot_sound, shot_duration=0.5):
+    def __init__(self, normal, aimed_normal, shot_animation, aiming_animation,
+                 aimed_shot_animation, shot_sound, duration=0.5):
         # self.animations = {
         #   'название_анимации': [
         #       массив_кадров_анимации,
@@ -69,25 +69,31 @@ class Weapon:
         # }
         # 
         # Кадры представленны в виде массива названий картинок,
-        # которые храняться в ImageController.
-        # Длительность показа измеряется в секкундах.
+        # которые хранятся в ImageController.
+        # Длительность показа измеряется в секундах.
         self.animations = {
             'normal': [normal, 0],
+            'aimed_normal': [aimed_normal, 0],
             'shot': [
                 shot_animation,
-                shot_duration / len(shot_animation)
-            ]
+                duration / len(shot_animation)],
+            'aiming': [
+                aiming_animation,
+                duration / len(aiming_animation)],
+            'aimed_shot': [
+                aimed_shot_animation,
+                duration / len(aimed_shot_animation)]
         }
 
         self.sound = pygame.mixer.Sound(shot_sound)
-        
+
         self.timer = 0
         self.state = ['normal', 0]
-    
+
     def set_state(self, state):
         if state in self.animations:
             self.state = [state, 0]
-    
+
     def update(self, tick):
         self.timer += tick
 
@@ -103,5 +109,14 @@ class Weapon:
                     break
                 else:
                     self.state[1] += 1
-
                 self.timer -= self.animations['shot'][1]
+        elif self.state[0] == 'aiming':
+            while self.timer > self.animations['aiming'][1]:
+                if self.state[1] + 1 >= len(self.animations['aiming'][0]):
+                    self.state[0] = 'aimed_normal'
+                    self.state[1] = 0
+                    self.timer = 0
+                    break
+                else:
+                    self.state[1] += 1
+                self.timer -= self.animations['aiming'][1]
