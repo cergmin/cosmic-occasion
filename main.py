@@ -1,6 +1,7 @@
 import pygame
 from math import cos, sin, radians
 from settings import *
+from controllers import *
 from world import World
 from player import Player
 from drawing import Drawing
@@ -13,6 +14,9 @@ if __name__ == '__main__':
 
     size = WIDTH, HEIGHT
     screen = pygame.display.set_mode(size)
+
+    ic = ImageController()
+
     player = Player(100, 100)
     world = World([
         ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w'],
@@ -25,14 +29,37 @@ if __name__ == '__main__':
         ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w']
     ])
 
+
+    draw = Drawing(screen, ic)
+    clock = pygame.time.Clock()
+
+    # Инициализация ресурсов
+    for folder in ['normal', 'hover', 'clicked']:
+        for img in ['start', 'between', 'middle', 'end']:
+            ic.load(
+                'images/button/' + folder + '/' + img + '.png',
+                'btn_' + folder + '_' + img,
+                alpha=True,
+                max_height=100
+            )
+    
+    ic.load(
+        'images/menu.jpg',
+        'menu_background',
+        max_width=WIDTH,
+        max_height=HEIGHT
+    )
+    
+    ic.load(
+        'images/wall.jpg',
+        'wall'
+    )
+
     game_music = Sound('sounds/game.mp3')
     game_music.stop()
     
     menu_music = Sound('sounds/menu.mp3')
     menu_music.stop()
-
-    draw = Drawing(screen)
-    clock = pygame.time.Clock()
 
     menu_oppend = True
     running = True

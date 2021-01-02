@@ -164,8 +164,9 @@ class Button(ElementUI):
 
 
 class Drawing:
-    def __init__(self, screen):
+    def __init__(self, screen, ic):
         self.screen = screen
+        self.ic = ic
         self.clock = pygame.time.Clock()
 
     def background(self):
@@ -233,9 +234,6 @@ class Drawing:
                     )
                 )
             elif obj_info['type'] == 'TexturedWall':
-                texture_width, texture_height = obj_info['texture'].get_size()
-                texture_scale_x = texture_width // TILE_SIZE
-
                 # Высота проекции стены на экран
                 wall_height = 5 * (DIST * TILE_SIZE) // \
                               (depth + 0.0001)
@@ -243,7 +241,9 @@ class Drawing:
                 tile_scale = DIST / (depth + 0.0001)
                 tile_scale = max(1, tile_scale)
 
-                wall_column = obj_info['texture']
+                wall_column = self.ic.get(obj_info['texture_name'])
+                texture_width, texture_height = wall_column.get_size()
+                texture_scale_x = texture_width // TILE_SIZE
 
                 # Вырезаем из текстуры столб пикселей
                 wall_column = wall_column.subsurface(
@@ -295,20 +295,13 @@ class Drawing:
     def menu(self):
         self.menu_running = True
 
-        button_resources = [
-            pygame.image.load('images/button/normal/start.png').convert_alpha(),
-            pygame.image.load('images/button/normal/between.png').convert_alpha(),
-            pygame.image.load('images/button/normal/middle.png').convert_alpha(),
-            pygame.image.load('images/button/normal/end.png').convert_alpha(),
-            pygame.image.load('images/button/hover/start.png').convert_alpha(),
-            pygame.image.load('images/button/hover/between.png').convert_alpha(),
-            pygame.image.load('images/button/hover/middle.png').convert_alpha(),
-            pygame.image.load('images/button/hover/end.png').convert_alpha(),
-            pygame.image.load('images/button/clicked/start.png').convert_alpha(),
-            pygame.image.load('images/button/clicked/between.png').convert_alpha(),
-            pygame.image.load('images/button/clicked/middle.png').convert_alpha(),
-            pygame.image.load('images/button/clicked/end.png').convert_alpha()
-        ]
+
+        button_resources = []
+        for folder in ['normal', 'hover', 'clicked']:
+            for img in ['start', 'between', 'middle', 'end']:
+                button_resources.append(
+                    self.ic.get('btn_' + folder + '_' + img)
+                )
 
         button_text_attributes = {
             'text_color': (171, 242, 255),
@@ -342,7 +335,7 @@ class Drawing:
         title = title_font.render('COSMIC OCCASION', True, (255, 255, 255))
 
         background_image = pygame.transform.scale(
-            pygame.image.load('images/menu.jpg').convert(),
+            self.ic.get('menu_background'),
             (WIDTH, HEIGHT)
         )
 

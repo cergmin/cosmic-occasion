@@ -21,7 +21,7 @@ class World:
                         TexturedWall(
                             TILE_SIZE * j,
                             TILE_SIZE * i,
-                            'images/wall.jpg'
+                            'wall'
                         )
                     )
                 elif obj_char == '.':
@@ -52,7 +52,7 @@ class Wall(WorldObject):
 
 
 class TexturedWall(Wall):
-    def __init__(self, x, y, texture):
+    def __init__(self, x, y, texture_name):
         super().__init__(x, y)
-        self.texture = pygame.image.load(texture).convert()
-        self.info['texture'] = self.texture
+        self.texture_name = texture_name
+        self.info['texture_name'] = self.texture_name
