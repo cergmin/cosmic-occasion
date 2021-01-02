@@ -42,10 +42,20 @@ if __name__ == '__main__':
         'wall'
     )
 
-    for i in range(11):
+    ic.load(
+        f'images/gun/shoot/0.png',
+        'gun',
+        alpha=True
+    )
+    ic.load(
+            f'images/gun/aim_shoot/0.png',
+            'aimed_gun',
+            alpha=True
+        )
+    for i in range(1, 11):
         ic.load(
             f'images/gun/shoot/{i}.png',
-            'gun_' + str(i),
+            'shot_' + str(i),
             alpha=True
         )
     for i in range(11):
@@ -54,7 +64,7 @@ if __name__ == '__main__':
             'aiming_' + str(i),
             alpha=True
         )
-    for i in range(11):
+    for i in range(1, 11):
         ic.load(
             f'images/gun/aim_shoot/{i}.png',
             'aimed_shot_' + str(i),
@@ -78,14 +88,16 @@ if __name__ == '__main__':
         ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w']
     ])
     gun = Weapon(
-        ['gun_0'], ['aimed_shot_0'],
-        ['gun_' + str(i) for i in range(1, 11)],
+        ['gun'], ['aimed_gun'],
+        ['shot_' + str(i) for i in range(1, 11)],
         ['aiming_' + str(i) for i in range(1, 11)],
         ['aimed_shot_' + str(i) for i in range(1, 11)],
         'sounds/gun.mp3',
-        duration=0.3
+        shot_duration=0.3,
+        aiming_duration=0.2
     )
 
+    is_aiming = False
     aim_trigger = False
     menu_opened = True
     running = True
@@ -109,11 +121,21 @@ if __name__ == '__main__':
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     gun.sound.play()
-                    gun.set_state('shot')
+                    gun.set_state(
+                        'aimed_shot' if is_aiming else 'shot'
+                    )
                     aim_trigger = True
                 elif event.button == 3:
-                    gun.set_state('aiming')
-                    print("ass")
+                    is_aiming = not is_aiming
+                    
+                    if is_aiming:
+                        gun.set_state('aiming')
+                        player.speed /= 4
+                        SENSITIVITY *= 4
+                    else:
+                        gun.set_state('reversed_aiming')
+                        player.speed *= 4
+                        SENSITIVITY /= 4
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:

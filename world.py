@@ -60,7 +60,8 @@ class TexturedWall(Wall):
 
 class Weapon:
     def __init__(self, normal, aimed_normal, shot_animation, aiming_animation,
-                 aimed_shot_animation, shot_sound, duration=0.5):
+                 aimed_shot_animation, shot_sound, shot_duration=0.5,
+                 aiming_duration=0.3):
         # self.animations = {
         #   'название_анимации': [
         #       массив_кадров_анимации,
@@ -76,13 +77,16 @@ class Weapon:
             'aimed_normal': [aimed_normal, 0],
             'shot': [
                 shot_animation,
-                duration / len(shot_animation)],
+                shot_duration / len(shot_animation)],
             'aiming': [
                 aiming_animation,
-                duration / len(aiming_animation)],
+                aiming_duration / len(aiming_animation)],
+            'reversed_aiming': [
+                aiming_animation[::-1],
+                aiming_duration / len(aiming_animation)],
             'aimed_shot': [
                 aimed_shot_animation,
-                duration / len(aimed_shot_animation)]
+                shot_duration / len(aimed_shot_animation)]
         }
 
         self.sound = pygame.mixer.Sound(shot_sound)
@@ -100,6 +104,9 @@ class Weapon:
         if self.state[0] == 'normal':
             self.timer = 0
             self.state[1] = 0
+        if self.state[0] == 'aimed_normal':
+            self.timer = 0
+            self.state[1] = 0
         elif self.state[0] == 'shot':
             while self.timer > self.animations['shot'][1]:
                 if self.state[1] + 1 >= len(self.animations['shot'][0]):
@@ -110,6 +117,16 @@ class Weapon:
                 else:
                     self.state[1] += 1
                 self.timer -= self.animations['shot'][1]
+        elif self.state[0] == 'aimed_shot':
+            while self.timer > self.animations['aimed_shot'][1]:
+                if self.state[1] + 1 >= len(self.animations['aimed_shot'][0]):
+                    self.state[0] = 'aimed_normal'
+                    self.state[1] = 0
+                    self.timer = 0
+                    break
+                else:
+                    self.state[1] += 1
+                self.timer -= self.animations['aimed_shot'][1]
         elif self.state[0] == 'aiming':
             while self.timer > self.animations['aiming'][1]:
                 if self.state[1] + 1 >= len(self.animations['aiming'][0]):
@@ -120,3 +137,14 @@ class Weapon:
                 else:
                     self.state[1] += 1
                 self.timer -= self.animations['aiming'][1]
+        elif self.state[0] == 'reversed_aiming':
+            while self.timer > self.animations['reversed_aiming'][1]:
+                if self.state[1] + 1 >= \
+                   len(self.animations['reversed_aiming'][0]):
+                    self.state[0] = 'normal'
+                    self.state[1] = 0
+                    self.timer = 0
+                    break
+                else:
+                    self.state[1] += 1
+                self.timer -= self.animations['reversed_aiming'][1]

@@ -390,13 +390,30 @@ class Drawing:
             aim_img = pygame.image.load("images/aim2.png")
         else:
             aim_img = pygame.image.load("images/aim1.png")
-        self.screen.blit(aim_img, ((WIDTH - aim_img.get_size()[0]) // 2, (HEIGHT - aim_img.get_size()[1]) // 2))
+        self.screen.blit(
+            aim_img,
+            (
+                (WIDTH - aim_img.get_size()[0]) / 2,
+                (HEIGHT - aim_img.get_size()[1]) / 2
+            )
+        )
 
     def weapon(self, weapon):
+        img_original_width = self.ic.get(
+            weapon.animations[weapon.state[0]][0][weapon.state[1]]
+        ).get_size()[0]
+
         img = pygame.transform.scale(
             self.ic.get(
                 weapon.animations[weapon.state[0]][0][weapon.state[1]]
             ),
             (WIDTH, HEIGHT)
         )
-        self.screen.blit(img, (0, 0))
+        self.screen.blit(
+            img,
+            (
+                # Чтобы соотнести прицел и центр оружия
+                -30 * WIDTH / img_original_width,
+                0
+            )
+        )
