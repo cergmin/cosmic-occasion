@@ -15,12 +15,8 @@ if __name__ == '__main__':
     size = WIDTH, HEIGHT
     screen = pygame.display.set_mode(size)
 
-    ic = ImageController()
-
-    draw = Drawing(screen, ic)
-    clock = pygame.time.Clock()
-
     # Инициализация ресурсов
+    ic = ImageController()
     for folder in ['normal', 'hover', 'clicked']:
         for img in ['start', 'between', 'middle', 'end']:
             ic.load(
@@ -43,15 +39,21 @@ if __name__ == '__main__':
     )
 
     ic.load(
-        f'images/gun/shoot/0.png',
+        'images/aim.png',
+        'aim',
+        alpha=True
+    )
+
+    ic.load(
+        'images/gun/shoot/0.png',
         'gun',
         alpha=True
     )
     ic.load(
-            f'images/gun/aim_shoot/0.png',
-            'aimed_gun',
-            alpha=True
-        )
+        'images/gun/aim_shoot/0.png',
+        'aimed_gun',
+        alpha=True
+    )
     for i in range(1, 11):
         ic.load(
             f'images/gun/shoot/{i}.png',
@@ -87,6 +89,11 @@ if __name__ == '__main__':
         ['w', '.', '.', '.', '.', '.', '.', 'w'],
         ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w']
     ])
+    # world = World([
+    #     ['w', 'w', 'w', 'w'],
+    #     ['w', '.', '.', 'w'],
+    #     ['w', 'w', 'w', 'w']
+    # ])
     gun = Weapon(
         ['gun'], ['aimed_gun'],
         ['shot_' + str(i) for i in range(1, 11)],
@@ -97,14 +104,15 @@ if __name__ == '__main__':
         aiming_duration=0.2
     )
 
+    draw = Drawing(screen, ic)
+    clock = pygame.time.Clock()
+
     is_aiming = False
-    aim_trigger = False
     menu_opened = True
     running = True
     while running:
         tick = clock.tick() / 1000
         
-        aim_color = (255, 255, 255)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -124,7 +132,6 @@ if __name__ == '__main__':
                     gun.set_state(
                         'aimed_shot' if is_aiming else 'shot'
                     )
-                    aim_trigger = True
                 elif event.button == 3:
                     is_aiming = not is_aiming
                     
@@ -183,8 +190,7 @@ if __name__ == '__main__':
         draw.background()
         draw.world(world, player)
         draw.fps(clock)
-        draw.aim(aim_trigger)
-        aim_trigger = False
+        draw.aim()
         gun.update(tick)
         draw.weapon(gun)
 

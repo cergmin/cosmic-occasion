@@ -1,4 +1,5 @@
 import pygame
+import time
 from math import tan, cos, radians
 from settings import *
 from ray import Ray
@@ -168,6 +169,7 @@ class Drawing:
     def __init__(self, screen, ic):
         self.screen = screen
         self.ic = ic
+        self.ray = Ray()
 
     def background(self):
         pygame.draw.rect(
@@ -194,15 +196,13 @@ class Drawing:
         )
 
     def world(self, world, player):
-        ray = Ray(world, player)
-
         for i in range(RAYS_AMOUNT):
             ray_angle_x = player.vx + i * OFFSET_ANGLE - FOV / 2
-            depth, ray_offset, obj_info = ray.cast(
+            depth, ray_offset, obj_info = self.ray.cast(
+                world,
                 player.x,
                 player.y,
-                ray_angle_x,
-                player.vy
+                ray_angle_x
             )
 
             # Исправление эффекта рыбьего глаза
@@ -239,7 +239,7 @@ class Drawing:
                               (depth + 0.0001)
 
                 tile_scale = DIST / (depth + 0.0001)
-                tile_scale = max(1, tile_scale)
+                tile_scale = min(5, max(1, tile_scale))
 
                 wall_column = self.ic.get(obj_info['texture_name'])
                 texture_width, texture_height = wall_column.get_size()
@@ -384,12 +384,8 @@ class Drawing:
             clock.tick(60)
             pygame.display.flip()
 
-    def aim(self, aim_trigger):
-        self.aim_trigger = aim_trigger
-        if self.aim_trigger:
-            aim_img = pygame.image.load("images/aim2.png")
-        else:
-            aim_img = pygame.image.load("images/aim1.png")
+    def aim(self):
+        aim_img = self.ic.get('aim')
         self.screen.blit(
             aim_img,
             (

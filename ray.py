@@ -5,14 +5,12 @@ from utilities import *
 
 
 class Ray:
-    def __init__(self, world, player):
-        self.world = world
-        self.player = player
+    def __init__(self):
+        pass
     
     # cast с оптимизацией
-    def cast(self, x, y, vx, vy):
+    def cast(self, world, x, y, cur_angle):
         xm, ym = mapping(x, y)
-        cur_angle = vx
 
         cur_angle_sin = sin(radians(cur_angle))
         cur_angle_cos = cos(radians(cur_angle))
@@ -32,20 +30,17 @@ class Ray:
             ray_y = ym
             dy = -1  # Направление движения луча: против оси y
 
-        for i in range(0, MAX_DEPTH, TILE_SIZE):
+        for i in range(0, MAX_DEPTH, TILE_SIZE):            
             depth_x = (ray_y - y) / cur_angle_sin
             ray_x = x + depth_x * cur_angle_cos
             offset_x = x + depth_x * cur_angle_cos
 
-            ray_collided = False
-            for obj in self.world.objects:
-                if mapping(ray_x, ray_y + dy) == \
-                   mapping(obj.x, obj.y):
-                    obj_info_x = obj.get_info()
-                    ray_collided = True
-            
-            if ray_collided:
+            if mapping(ray_x, ray_y + dy) in world.objects:
+                obj_info_x = world.objects[
+                    mapping(ray_x, ray_y + dy)
+                ].get_info()
                 break
+            
             ray_y += dy * TILE_SIZE
         
         # Пересечения с вертикалями
@@ -63,16 +58,12 @@ class Ray:
             ray_y = y + depth_y * cur_angle_sin
             offset_y = y + depth_y * cur_angle_sin
 
-            ray_collided = False
-            for obj in self.world.objects:
-                if mapping(ray_x + dx, ray_y) == \
-                   mapping(obj.x, obj.y):
-                    obj_info_y = obj.get_info()
-                    ray_collided = True
-                    break
-            
-            if ray_collided:
+            if mapping(ray_x + dx, ray_y) in world.objects:
+                obj_info_y = world.objects[
+                    mapping(ray_x + dx, ray_y)
+                ].get_info()
                 break
+            
             ray_x += dx * TILE_SIZE
 
         # Определение ближайшего пересечения

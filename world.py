@@ -5,24 +5,26 @@ from settings import *
 class World:
     def __init__(self, map):
         self.map = list(map)
-        self.objects = set()
+        self.objects = dict()
 
         for i, row in enumerate(self.map):
             for j, obj_char in enumerate(row):
                 if obj_char == 'W':
-                    self.objects.add(
-                        Wall(
-                            TILE_SIZE * j,
-                            TILE_SIZE * i
-                        )
+                    self.objects[(
+                        TILE_SIZE * j,
+                        TILE_SIZE * i
+                    )] = Wall(
+                        TILE_SIZE * j,
+                        TILE_SIZE * i
                     )
                 elif obj_char == 'w':
-                    self.objects.add(
-                        TexturedWall(
-                            TILE_SIZE * j,
-                            TILE_SIZE * i,
-                            'wall'
-                        )
+                    self.objects[(
+                        TILE_SIZE * j,
+                        TILE_SIZE * i
+                    )] = TexturedWall(
+                        TILE_SIZE * j,
+                        TILE_SIZE * i,
+                        'wall'
                     )
                 elif obj_char == '.':
                     pass
