@@ -1,9 +1,8 @@
-import pygame
-import time
 from math import tan, cos, radians
-from settings import *
-from ray import Ray
+import pygame
 from pygame.mixer import Sound
+from settings import *
+from ray import ray_cast
 from controllers import ImageController
 
 
@@ -169,7 +168,6 @@ class Drawing:
     def __init__(self, screen, ic):
         self.screen = screen
         self.ic = ic
-        self.ray = Ray()
 
     def background(self):
         pygame.draw.rect(
@@ -198,7 +196,7 @@ class Drawing:
     def world(self, world, player):
         for i in range(RAYS_AMOUNT):
             ray_angle_x = player.vx + i * OFFSET_ANGLE - FOV / 2
-            depth, ray_offset, obj_info = self.ray.cast(
+            depth, ray_offset, obj_info = ray_cast(
                 world,
                 player.x,
                 player.y,
@@ -210,7 +208,7 @@ class Drawing:
 
             if obj_info['type'] == 'Wall':
                 # Высота проекции стены на экран
-                wall_height = 5 * (DIST * TILE_SIZE) // \
+                wall_height = 5 * (DIST * GRID_SIZE) // \
                               (depth + 0.0001)
 
                 pixel_color = [
@@ -235,7 +233,7 @@ class Drawing:
                 )
             elif obj_info['type'] == 'TexturedWall':
                 # Высота проекции стены на экран
-                wall_height = 5 * (DIST * TILE_SIZE) // \
+                wall_height = 5 * (DIST * GRID_SIZE) // \
                               (depth + 0.0001)
 
                 tile_scale = DIST / (depth + 0.0001)
@@ -243,7 +241,7 @@ class Drawing:
 
                 wall_column = self.ic.get(obj_info['texture_name'])
                 texture_width, texture_height = wall_column.get_size()
-                texture_scale_x = texture_width // TILE_SIZE
+                texture_scale_x = texture_width // GRID_SIZE
 
                 # Вырезаем из текстуры столб пикселей
                 wall_column = wall_column.subsurface(

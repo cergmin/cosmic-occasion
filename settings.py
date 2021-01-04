@@ -1,6 +1,6 @@
-from math import *
+from math import radians, tan
 
-TILE_SIZE = 60
+GRID_SIZE = 60
 WIDTH = 1280
 HEIGHT = 720
 RAYS_AMOUNT = 100

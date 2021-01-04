@@ -1,11 +1,12 @@
-import pygame
 from math import cos, sin, radians
+import pygame
+from pygame.mixer import Sound
 from settings import *
 from controllers import *
 from world import *
 from player import Player
+from ray import ray_cast
 from drawing import Drawing
-from pygame.mixer import Sound
 
 
 if __name__ == '__main__':
@@ -89,11 +90,6 @@ if __name__ == '__main__':
         ['w', '.', '.', '.', '.', '.', '.', 'w'],
         ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w']
     ])
-    # world = World([
-    #     ['w', 'w', 'w', 'w'],
-    #     ['w', '.', '.', 'w'],
-    #     ['w', 'w', 'w', 'w']
-    # ])
     gun = Weapon(
         ['gun'], ['aimed_gun'],
         ['shot_' + str(i) for i in range(1, 11)],
@@ -146,21 +142,13 @@ if __name__ == '__main__':
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
-            player.x += player.speed * cos(radians(player.vx)) * tick
-            player.y += player.speed * sin(radians(player.vx)) * tick
+            player.move(world, 0, player.speed * tick)
         if keys[pygame.K_s]:
-            player.x -= player.speed * cos(radians(player.vx)) * tick
-            player.y -= player.speed * sin(radians(player.vx)) * tick
+            player.move(world, 180, player.speed * tick)
         if keys[pygame.K_a]:
-            player.x += player.speed * sin(radians(player.vx)) * tick
-            player.y -= player.speed * cos(radians(player.vx)) * tick
+            player.move(world, -90, player.speed * tick)
         if keys[pygame.K_d]:
-            player.x -= player.speed * sin(radians(player.vx)) * tick
-            player.y += player.speed * cos(radians(player.vx)) * tick
-        if keys[pygame.K_LEFT]:
-            player.vx -= 80 * tick
-        if keys[pygame.K_RIGHT]:
-            player.vx += 80 * tick
+            player.move(world, 90, player.speed * tick)
         if keys[pygame.K_ESCAPE]:
             menu_opened = True
 

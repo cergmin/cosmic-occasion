@@ -1,4 +1,4 @@
-import pygame
+from pygame.mixer import Sound
 from settings import *
 
 
@@ -11,19 +11,19 @@ class World:
             for j, obj_char in enumerate(row):
                 if obj_char == 'W':
                     self.objects[(
-                        TILE_SIZE * j,
-                        TILE_SIZE * i
+                        GRID_SIZE * j,
+                        GRID_SIZE * i
                     )] = Wall(
-                        TILE_SIZE * j,
-                        TILE_SIZE * i
+                        GRID_SIZE * j,
+                        GRID_SIZE * i
                     )
                 elif obj_char == 'w':
                     self.objects[(
-                        TILE_SIZE * j,
-                        TILE_SIZE * i
+                        GRID_SIZE * j,
+                        GRID_SIZE * i
                     )] = TexturedWall(
-                        TILE_SIZE * j,
-                        TILE_SIZE * i,
+                        GRID_SIZE * j,
+                        GRID_SIZE * i,
                         'wall'
                     )
                 elif obj_char == '.':
@@ -91,7 +91,7 @@ class Weapon:
                 shot_duration / len(aimed_shot_animation)]
         }
 
-        self.sound = pygame.mixer.Sound(shot_sound)
+        self.sound = Sound(shot_sound)
 
         self.timer = 0
         self.state = ['normal', 0]
