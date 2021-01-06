@@ -83,9 +83,23 @@ class Button(ElementUI):
         self.states_list = [
             'normal',
             'hover',
-            'clicked',
+            'clicked-mousedown',
+            'clicked-mouseup'
         ]
         self.state = self.states_list[0]
+    
+    def update_state(self, mouse):
+        if self.is_hover(*mouse.get_pos()):
+            if pygame.mouse.get_pressed(3)[0]:
+                self.set_state('clicked-mousedown')
+            elif self.state == 'clicked-mousedown':
+                self.set_state('clicked-mouseup')
+            else:
+                self.set_state('hover')
+        else:
+            self.set_state('normal')
+
+        pygame.mouse
 
     def set_state(self, state):
         state = str(state).lower()
@@ -93,12 +107,15 @@ class Button(ElementUI):
             self.state = self.states_list[0]
         else:
             self.state = state
+    
+    def get_state(self):
+        return self.state
 
     def draw(self, surface):
         img_w = {}
 
         for i in filter(
-            lambda x: x.startswith(self.state + '_'),
+            lambda x: x.startswith(self.state.split('-')[0] + '_'),
             self.img
         ):
             img_w[i.split('_')[-1]] = max(
@@ -133,7 +150,7 @@ class Button(ElementUI):
         x_offset = 0
         for i in img_amount:
             scaled_img = pygame.transform.scale(
-                self.img[self.state + '_' + i[0]],
+                self.img[self.state.split('-')[0] + '_' + i[0]],
                 (
                     i[1],
                     self.height
@@ -153,7 +170,7 @@ class Button(ElementUI):
         text_surface = self.font.render(
             self.text,
             True,
-            self.text_color[self.state]
+            self.text_color[self.state.split('-')[0]]
         )
         surface.blit(
             text_surface,
@@ -337,7 +354,6 @@ class Drawing:
             (WIDTH, HEIGHT)
         )
 
-        mouse_state = [False, -1]  # [is_clicked, btn_id]
         while self.menu_running:
 
             for event in pygame.event.get():
@@ -355,29 +371,20 @@ class Drawing:
                 )
             )
             for btn in [start_button, settings_button, exit_button]:
-                if btn.is_hover(*pygame.mouse.get_pos()):
-                    if pygame.mouse.get_pressed(3)[0]:
-                        btn.set_state('clicked')
-                        mouse_state[1] = id(btn)
-                    else:
-                        btn.set_state('hover')
-                else:
-                    btn.set_state('normal')
-                btn.draw(self.screen)
-            mouse_state[0] = pygame.mouse.get_pressed(3)[0]
-            if not mouse_state[0]:
-                if mouse_state[1] != -1:
+                btn.update_state(pygame.mouse)
+
+                if btn.get_state() == 'clicked-mouseup':
                     Sound("sounds/button_pressed.mp3").play()
 
-                if mouse_state[1] == id(start_button):
-                    self.menu_running = False
-                elif mouse_state[1] == id(settings_button):
-                    print('settings')
-                elif mouse_state[1] == id(exit_button):
-                    pygame.quit()
-                    exit(0)
+                    if id(btn) == id(start_button):
+                        self.menu_running = False
+                    elif id(btn) == id(settings_button):
+                        print('settings')
+                    elif id(btn) == id(exit_button):
+                        pygame.quit()
+                        exit(0)
 
-                mouse_state[1] = -1
+                btn.draw(self.screen)
 
             clock.tick(60)
             pygame.display.flip()
