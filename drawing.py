@@ -83,9 +83,21 @@ class Button(ElementUI):
         self.states_list = [
             'normal',
             'hover',
-            'clicked',
+            'clicked-mousedown',
+            'clicked-mouseup'
         ]
         self.state = self.states_list[0]
+    
+    def update_state(self, mouse):
+        if self.is_hover(*mouse.get_pos()):
+            if pygame.mouse.get_pressed(3)[0]:
+                self.set_state('clicked-mousedown')
+            elif self.state == 'clicked-mousedown':
+                self.set_state('clicked-mouseup')
+            else:
+                self.set_state('hover')
+        else:
+            self.set_state('normal')
 
     def set_state(self, state):
         state = str(state).lower()
@@ -93,12 +105,15 @@ class Button(ElementUI):
             self.state = self.states_list[0]
         else:
             self.state = state
+    
+    def get_state(self):
+        return self.state
 
     def draw(self, surface):
         img_w = {}
 
         for i in filter(
-            lambda x: x.startswith(self.state + '_'),
+            lambda x: x.startswith(self.state.split('-')[0] + '_'),
             self.img
         ):
             img_w[i.split('_')[-1]] = max(
@@ -133,7 +148,7 @@ class Button(ElementUI):
         x_offset = 0
         for i in img_amount:
             scaled_img = pygame.transform.scale(
-                self.img[self.state + '_' + i[0]],
+                self.img[self.state.split('-')[0] + '_' + i[0]],
                 (
                     i[1],
                     self.height
@@ -153,13 +168,188 @@ class Button(ElementUI):
         text_surface = self.font.render(
             self.text,
             True,
-            self.text_color[self.state]
+            self.text_color[self.state.split('-')[0]]
         )
         surface.blit(
             text_surface,
             (
                 self.x + (self.width - text_surface.get_size()[0]) // 2,
                 self.y + (self.height - text_surface.get_size()[1]) // 2
+            )
+        )
+
+
+class Slider(ElementUI):
+    def __init__(self, x, y, width, height,
+                 img_start, img_start_between, img_end_between,
+                 img_end, img_pointer, min_value=0, max_value=100,
+                 value_step=1):
+        super().__init__(x, y, width, height)
+
+        self.img = {
+            'start': img_start,
+            'start_between': img_start_between,
+            'end_between': img_end_between,
+            'end': img_end,
+            'pointer': img_pointer
+        }
+        
+        self.min_value = min(min_value, max_value)
+        self.max_value = max(self.min_value, max_value)
+        self.value_step = value_step
+        self.value_step_offset = self.min_value % value_step
+        self.value = self.min_value
+        
+        self.states_list = [
+            'slider-mouseup',
+            'slider-mousedown'
+        ]
+        self.state = self.states_list[0]
+    
+    def update_state(self, mouse):
+        if not mouse.get_pressed(3)[0]:
+            self.set_state('slider-mouseup')
+
+        if self.get_state() == 'slider-mousedown' or \
+           (self.is_hover(*mouse.get_pos()) and mouse.get_pressed(3)[0]):
+            if mouse.get_pressed(3)[0]:
+                self.set_state('slider-mousedown')
+
+            img_w = {}
+            for i in self.img:
+                img_w[i] = max(
+                    1,
+                    round(
+                        self.img[i].get_size()[0] * \
+                        (self.height / self.img[i].get_size()[1])
+                    )
+                )
+
+            self.set_percentage(
+                (
+                    mouse.get_pos()[0] - self.x
+                ) / self.width,
+                min_limit=True,
+                max_limit=True,
+                step_limit=True
+            )
+
+    def set_state(self, state):
+        state = str(state).lower()
+        if state not in self.states_list:
+            self.state = self.states_list[0]
+        else:
+            self.state = state
+    
+    def get_state(self):
+        return self.state
+
+    def set_value(self, value, min_limit=False,
+                  max_limit=False, step_limit=False):
+        if step_limit and value % self.value_step != self.value_step_offset:
+            value -= (value % self.value_step) - self.value_step_offset
+
+        if min_limit and value < self.min_value:
+            value = self.min_value
+        
+        if max_limit and value > self.max_value:
+            value = self.max_value
+
+        self.value = value
+    
+    def get_value(self):
+        return self.value
+    
+    def set_percentage(self, percentage, min_limit=False,
+                       max_limit=False, step_limit=False):
+        value = (
+            self.max_value - self.min_value
+        ) * percentage + self.min_value
+
+        self.set_value(value, min_limit, max_limit, step_limit)
+    
+    def get_percentage(self):
+        return (self.value - self.min_value) / self.max_value
+
+    def draw(self, surface):
+        img_w = {}
+
+        for i in self.img:
+            img_w[i] = max(
+                1,
+                round(
+                    self.img[i].get_size()[0] * \
+                    (self.height / self.img[i].get_size()[1])
+                )
+            )
+
+        img_amount = [
+            [
+                'start',
+                min(
+                    img_w['start'],
+                    self.width // 2
+                )
+            ],
+            ['start_between', 0],
+            ['end_between', 0],
+            [
+                'end',
+                min(
+                    img_w['start'],
+                    self.width // 2
+                )
+            ]
+        ]
+
+        width_rest = self.width - (
+            img_amount[0][1] + 
+            img_amount[3][1]
+        )
+
+        img_amount[1][1] = round(width_rest * self.get_percentage())
+        img_amount[2][1] = width_rest - img_amount[1][1]
+
+        x_offset = 0
+        for i in img_amount:
+            scaled_img = pygame.transform.scale(
+                self.img[i[0]],
+                (
+                    i[1],
+                    self.height
+                )
+            )
+
+            surface.blit(
+                scaled_img,
+                (
+                    self.x + x_offset,
+                    self.y
+                )
+            )
+
+            x_offset += i[1]
+        
+        pointer_width = round(
+            self.img['pointer'].get_size()[0] * (
+                self.height / self.img['pointer'].get_size()[1]    
+            )
+        )
+        x_pointer_pos = self.x + (
+            self.width - pointer_width
+        ) * self.get_percentage()
+        scaled_img = pygame.transform.scale(
+            self.img['pointer'],
+            (
+                pointer_width,
+                self.height
+            )
+        )
+        surface.blit(
+            scaled_img,
+            (
+                x_pointer_pos,
+                self.y
             )
         )
 
@@ -329,6 +519,20 @@ class Drawing:
             text='exit'
         )
 
+        slider_resources = []
+        for img in [
+            'start', 'start_between', 'end_between',
+            'end', 'pointer'
+        ]:
+            slider_resources.append(
+                self.ic.get('slider_' + img)
+            )
+
+        volume_slider = Slider(
+            WIDTH // 2 - 210, 610, 420, 35,
+            *slider_resources
+        )
+
         title_font = pygame.font.Font('font/guardianlai.ttf', WIDTH // 13)
         title = title_font.render('COSMIC OCCASION', True, (255, 255, 255))
 
@@ -337,7 +541,6 @@ class Drawing:
             (WIDTH, HEIGHT)
         )
 
-        mouse_state = [False, -1]  # [is_clicked, btn_id]
         while self.menu_running:
 
             for event in pygame.event.get():
@@ -355,29 +558,23 @@ class Drawing:
                 )
             )
             for btn in [start_button, settings_button, exit_button]:
-                if btn.is_hover(*pygame.mouse.get_pos()):
-                    if pygame.mouse.get_pressed(3)[0]:
-                        btn.set_state('clicked')
-                        mouse_state[1] = id(btn)
-                    else:
-                        btn.set_state('hover')
-                else:
-                    btn.set_state('normal')
-                btn.draw(self.screen)
-            mouse_state[0] = pygame.mouse.get_pressed(3)[0]
-            if not mouse_state[0]:
-                if mouse_state[1] != -1:
+                btn.update_state(pygame.mouse)
+
+                if btn.get_state() == 'clicked-mouseup':
                     Sound("sounds/button_pressed.mp3").play()
 
-                if mouse_state[1] == id(start_button):
-                    self.menu_running = False
-                elif mouse_state[1] == id(settings_button):
-                    print('settings')
-                elif mouse_state[1] == id(exit_button):
-                    pygame.quit()
-                    exit(0)
+                    if id(btn) == id(start_button):
+                        self.menu_running = False
+                    elif id(btn) == id(settings_button):
+                        print('settings')
+                    elif id(btn) == id(exit_button):
+                        pygame.quit()
+                        exit(0)
 
-                mouse_state[1] = -1
+                btn.draw(self.screen)
+            
+            volume_slider.update_state(pygame.mouse)
+            volume_slider.draw(self.screen)
 
             clock.tick(60)
             pygame.display.flip()

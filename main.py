@@ -27,6 +27,14 @@ if __name__ == '__main__':
                 max_height=100
             )
 
+    for img in ['start', 'start_between', 'end_between', 'end', 'pointer']:
+        ic.load(
+            'images/slider/' + img + '.png',
+            'slider_' + img,
+            alpha=True,
+            max_height=100
+        )
+
     ic.load(
         'images/menu.jpg',
         'menu_background',
