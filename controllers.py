@@ -1,17 +1,65 @@
-from pygame import image, transform
 from time import process_time
+from os import path
+from pygame import mixer, image, transform
 
-class ImageController:
+
+class ResourceController:
     def __init__(self):
-        self.images = dict()
+        self.resources = dict()
         self.init_time = process_time()
     
-    def load(self, path, key,
-             alpha=False, max_width=None,
-             max_height=None, rewrite=False):
-        if not rewrite and key in self.images:
+    def load(self, key, resource, rewrite=False, 
+             resource_type=None, **args):
+        if not rewrite and key in self.resources:
             return
- 
+
+        if type(resource) is str:
+            ext = path.splitext(resource)[1]
+            
+            if ext.lower() in ['.jpg', '.jpeg', '.png', '.gif'] or \
+               resource_type in ['image', 'picture']:
+                self.load_img(key, resource, rewrite, **args)
+            elif ext.lower() in ['.mp3', '.wav', '.ogg'] or \
+                 resource_type in ['sound', 'music', 'audio']:
+                self.load_sound(key, resource, rewrite, **args)
+            else:
+                self.resources[key] = {
+                    'resource': resource,
+                    'type': 'string',
+                    'last_use': process_time() - self.init_time
+                }
+        else:
+            resource_type = 'unknown'
+
+            if type(resource).__name__ in ['list', 'set', 'dict', 'tuple']:
+                resource_type = type(resource).__name__
+            elif type(resource).__name__ in ['ElementUI', 'Button', 'Slider']:
+                resource_type = 'ElementUI'
+
+            self.resources[key] = {
+                'resource': resource,
+                'type': 'unknown',
+                'last_use': process_time() - self.init_time
+            }
+    
+    def load_sound(self, key, path, rewrite=False, **args):
+        if not rewrite and key in self.resources:
+            return
+        
+        sound = mixer.Sound(path)
+        sound.stop()
+
+        self.resources[key] = {
+            'resource': sound,
+            'type': 'sound',
+            'last_use': process_time() - self.init_time
+        }
+    
+    def load_img(self, key, path, rewrite=False, alpha=False,
+                 max_width=None, max_height=None, **args):
+        if not rewrite and key in self.resources:
+            return
+        
         img = image.load(path)
 
         if alpha:
@@ -49,21 +97,22 @@ class ImageController:
                 )
             )
 
-        self.images[key] = {
-            'image': img,
+        self.resources[key] = {
+            'resource': img,
+            'type': 'image',
             'alpha': alpha,
             'last_use': process_time() - self.init_time
         }
 
     def get(self, key, full_info=False):
-        if key not in self.images:
+        if key not in self.resources:
             raise KeyError(
-                'There is no image with key \'' + str(key) + '\''
+                'There is no resource with key \'' + str(key) + '\''
             )
         
-        self.images[key]['last_use'] = process_time() - self.init_time
+        self.resources[key]['last_use'] = process_time() - self.init_time
 
         if full_info:
-            return self.images[key]
+            return self.resources[key]
         else:
-            return self.images[key]['image']
+            return self.resources[key]['resource']

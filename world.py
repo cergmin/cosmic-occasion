@@ -91,7 +91,7 @@ class Weapon:
                 shot_duration / len(aimed_shot_animation)]
         }
 
-        self.sound = Sound(shot_sound)
+        self.sound = shot_sound
 
         self.timer = 0
         self.state = ['normal', 0]

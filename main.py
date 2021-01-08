@@ -1,6 +1,5 @@
 from math import cos, sin, radians
 import pygame
-from pygame.mixer import Sound
 from settings import *
 from controllers import *
 from world import *
@@ -17,75 +16,79 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode(size)
 
     # Инициализация ресурсов
-    ic = ImageController()
+    rc = ResourceController()
+
+    rc.load('game_music', 'sounds/game.mp3')
+    rc.load('menu_music', 'sounds/menu.mp3')
+    rc.load('gun_sound', 'sounds/gun.mp3')
+
     for folder in ['normal', 'hover', 'clicked']:
         for img in ['start', 'between', 'middle', 'end']:
-            ic.load(
-                'images/button/' + folder + '/' + img + '.png',
+            rc.load(
                 'btn_' + folder + '_' + img,
+                'images/button/' + folder + '/' + img + '.png',
                 alpha=True,
                 max_height=100
             )
 
     for img in ['start', 'start_between', 'end_between', 'end', 'pointer']:
-        ic.load(
-            'images/slider/' + img + '.png',
+        rc.load(
             'slider_' + img,
+            'images/slider/' + img + '.png',
             alpha=True,
             max_height=100
         )
 
-    ic.load(
-        'images/menu.jpg',
+    rc.load(
         'menu_background',
+        'images/menu.jpg',
         max_width=WIDTH,
         max_height=HEIGHT
     )
 
-    ic.load(
-        'images/wall.jpg',
-        'wall'
+    rc.load(
+        'wall',
+        'images/wall.jpg'
     )
 
-    ic.load(
-        'images/aim.png',
+    rc.load(
         'aim',
+        'images/aim.png',
         alpha=True
     )
 
-    ic.load(
-        'images/gun/shoot/0.png',
+    rc.load(
         'gun',
+        'images/gun/shoot/0.png',
         alpha=True
     )
-    ic.load(
-        'images/gun/aim_shoot/0.png',
-        'aimed_gun',
-        alpha=True
-    )
-    for i in range(1, 11):
-        ic.load(
-            f'images/gun/shoot/{i}.png',
-            'shot_' + str(i),
-            alpha=True
-        )
-    for i in range(11):
-        ic.load(
-            f'images/gun/aim/{i}.png',
-            'aiming_' + str(i),
-            alpha=True
-        )
-    for i in range(1, 11):
-        ic.load(
-            f'images/gun/aim_shoot/{i}.png',
-            'aimed_shot_' + str(i),
-            alpha=True
-        )
-    game_music = Sound('sounds/game.mp3')
-    game_music.stop()
 
-    menu_music = Sound('sounds/menu.mp3')
-    menu_music.stop()
+    rc.load(
+        'aimed_gun',
+        'images/gun/aim_shoot/0.png',
+        alpha=True
+    )
+
+    for i in range(1, 11):
+        rc.load(
+            'shot_' + str(i),
+            f'images/gun/shoot/{i}.png',
+            alpha=True
+        )
+
+    for i in range(11):
+        rc.load(
+            'aiming_' + str(i),
+            f'images/gun/aim/{i}.png',
+            alpha=True
+        )
+
+    for i in range(1, 11):
+        rc.load(
+            'aimed_shot_' + str(i),
+            f'images/gun/aim_shoot/{i}.png',
+            alpha=True
+        )
 
     player = Player(100, 100)
     world = World([
@@ -103,12 +106,12 @@ if __name__ == '__main__':
         ['shot_' + str(i) for i in range(1, 11)],
         ['aiming_' + str(i) for i in range(1, 11)],
         ['aimed_shot_' + str(i) for i in range(1, 11)],
-        'sounds/gun.mp3',
+        'gun_sound',
         shot_duration=0.3,
         aiming_duration=0.2
     )
 
-    draw = Drawing(screen, ic)
+    draw = Drawing(screen, rc)
     clock = pygame.time.Clock()
 
     is_aiming = False
@@ -132,7 +135,7 @@ if __name__ == '__main__':
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    gun.sound.play()
+                    rc.get(gun.sound).play()
                     gun.set_state(
                         'aimed_shot' if is_aiming else 'shot'
                     )
@@ -166,29 +169,33 @@ if __name__ == '__main__':
             pygame.event.set_grab(False)
 
             # Переключение фоновой музыки
-            game_music.stop()
-            menu_music.play(loops=-1)
+            rc.get('game_music').stop()
+            rc.get('menu_music').play(loops=-1)
 
             # Установка курсора в центр и открытие меню
             pygame.mouse.set_pos(WIDTH // 2, HEIGHT // 2)
-            draw.menu()
+            action = draw.menu()
+
+            if action == 'start_game':
+                menu_opened = False
+            elif action == 'exit':
+                running = False
+                menu_opened = False
 
             # Прячем и "захватываем" курсор
             pygame.mouse.set_visible(False)
             pygame.event.set_grab(True)
 
             # Переключение фоновой музыки
-            game_music.play(loops=-1)
-            menu_music.stop()
-
-            menu_opened = False
-
-        draw.background()
-        draw.world(world, player)
-        draw.fps(clock)
-        draw.aim()
-        gun.update(tick)
-        draw.weapon(gun)
+            rc.get('game_music').play(loops=-1)
+            rc.get('menu_music').stop()
+        else:
+            draw.background()
+            draw.world(world, player)
+            draw.fps(clock)
+            draw.aim()
+            gun.update(tick)
+            draw.weapon(gun)
 
         pygame.display.flip()
     pygame.quit()
