@@ -1,4 +1,6 @@
+from math import *
 from pygame.mixer import Sound
+from pygame import sprite, transform
 from settings import *
 
 
@@ -6,6 +8,7 @@ class World:
     def __init__(self, map):
         self.map = list(map)
         self.objects = dict()
+        self.sprite_group = sprite.Group()
 
         for i, row in enumerate(self.map):
             for j, obj_char in enumerate(row):
@@ -32,6 +35,76 @@ class World:
                     assert ValueError(
                         f"Object '{obj_char}' is undefined"
                     )
+    
+    def add_sprite(self, sprite):
+        self.sprite_group.add(sprite)
+    
+    def update_sprites(self, player):
+        self.sprite_group.update(player)
+
+
+class WorldSprite(sprite.Sprite):
+    def __init__(self, sprite_x, sprite_y, sprite_height, image, rc):
+        super().__init__()
+        self.rc = rc
+        self.image = rc.get(image)
+        self.rect = self.image.get_rect()
+        
+        self.sprite_image = image
+        self.sprite_x = sprite_x
+        self.sprite_y = sprite_y
+        self.sprite_h = sprite_height
+        self.sprite_scale_k = self.rect.size[0] / self.rect.size[1]
+
+        self.rect.x = 0
+        self.rect.y = (HEIGHT - self.rect.size[1]) / 2
+        
+        self.set_scale(1)
+    
+    def draw(self, screen):
+        # Собственная функция рисования,
+        # чтобы можно было рисовать спрайты по отдельности
+        screen.blit(self.image, self.rect)
+    
+    def set_scale(self, scale):
+        self.rect.size = (
+            scale * self.sprite_h,
+            scale * self.sprite_h * self.sprite_scale_k
+        )
+
+        self.image = transform.scale(
+            self.rc.get(self.sprite_image),
+            self.rect.size
+        )
+
+        self.rect.y = (HEIGHT - self.rect.size[1]) / 2
+    
+    def update_perspective(self, player):
+        # Изменение пололжения спрайта относительно поворота игрока
+        sprite_angle = degrees(
+            atan2(
+                player.y - self.sprite_y,
+                player.x - self.sprite_x
+            )
+        )
+
+        delta_angle = (sprite_angle - player.vx) % 360
+        delta_angle = 180 - delta_angle
+
+        self.rect.x = (
+            (FOV / 2 - delta_angle) / FOV * WIDTH
+        )
+
+        # Изменение размера спрайта относительно положения игрока
+        sprite_distance = (
+            (self.sprite_x - player.x) ** 2 +
+            (self.sprite_y - player.y) ** 2
+        ) ** 0.5
+
+        self.set_scale(DIST / max(sprite_distance, 0.1))
+
+    def update(self, player):
+        self.update_perspective(player)
 
 
 class WorldObject:

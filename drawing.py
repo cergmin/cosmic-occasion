@@ -441,6 +441,23 @@ class Drawing:
         )
 
     def world(self, world, player):
+        z_buffer = []
+
+        world.update_sprites(player)
+        for sprite in world.sprite_group:
+            sprite_distance = (
+                (sprite.sprite_x - player.x) ** 2 +
+                (sprite.sprite_y - player.y) ** 2
+            ) ** 0.5
+
+            z_buffer.append([
+                sprite_distance,
+                {
+                    'type': type(sprite).__name__
+                },
+                sprite
+            ])
+
         for i in range(RAYS_AMOUNT):
             ray_angle_x = player.vx + i * OFFSET_ANGLE - FOV / 2
             depth, ray_offset, obj_info = ray_cast(
@@ -452,8 +469,24 @@ class Drawing:
 
             # Исправление эффекта рыбьего глаза
             depth *= cos(radians(player.vx - ray_angle_x))
+            
+            z_buffer.append([
+                depth,
+                obj_info,
+                [
+                    i, ray_offset
+                ]
+            ])
 
-            if obj_info['type'] == 'Wall':
+        for depth, obj_info, obj_data in sorted(
+            z_buffer, key=lambda x: x[0], reverse=True
+        ):
+            if obj_info['type'] == 'WorldSprite':
+                sprite = obj_data
+                sprite.draw(self.screen)
+            elif obj_info['type'] == 'Wall':
+                i, ray_offset = obj_data
+
                 # Высота проекции стены на экран
                 wall_height = 5 * (DIST * GRID_SIZE) // \
                               (depth + 0.0001)
@@ -479,6 +512,8 @@ class Drawing:
                     )
                 )
             elif obj_info['type'] == 'TexturedWall':
+                i, ray_offset = obj_data
+
                 # Высота проекции стены на экран
                 wall_height = 5 * (DIST * GRID_SIZE) // \
                               (depth + 0.0001)
@@ -523,7 +558,7 @@ class Drawing:
                 wall_column = pygame.transform.scale(
                     wall_column,
                     (
-                        WIDTH // RAYS_AMOUNT,
+                        WIDTH // RAYS_AMOUNT + 1,
                         int(wall_height)
                     )
                 )
@@ -532,7 +567,7 @@ class Drawing:
                 self.screen.blit(
                     wall_column,
                     (
-                        i * (WIDTH // RAYS_AMOUNT),
+                        i * (WIDTH // RAYS_AMOUNT + 1),
                         (HEIGHT - wall_height) // 2
                     )
                 )

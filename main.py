@@ -89,6 +89,8 @@ if __name__ == '__main__':
             f'images/gun/aim_shoot/{i}.png',
             alpha=True
         )
+    
+    rc.load('sprite', 'images/sprite.png', alpha=True)
 
     player = Player(100, 100)
     world = World([
@@ -101,6 +103,19 @@ if __name__ == '__main__':
         ['w', '.', '.', '.', '.', '.', '.', 'w'],
         ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w']
     ])
+    
+    world.add_sprite(
+        WorldSprite(
+            300, 100, 350, 'sprite', rc
+        )
+    )
+
+    world.add_sprite(
+        WorldSprite(
+            300, 400, 350, 'sprite', rc
+        )
+    )
+
     gun = Weapon(
         ['gun'], ['aimed_gun'],
         ['shot_' + str(i) for i in range(1, 11)],
