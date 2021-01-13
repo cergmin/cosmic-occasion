@@ -38,6 +38,12 @@ if __name__ == '__main__':
             alpha=True,
             max_height=100
         )
+    
+    rc.load(
+        'world_sky',
+        'images/sky.jpg',
+        max_height=(HEIGHT // 2)
+    )
 
     rc.load(
         'menu_background',
@@ -205,7 +211,7 @@ if __name__ == '__main__':
             rc.get('game_music').play(loops=-1)
             rc.get('menu_music').stop()
         else:
-            draw.background()
+            draw.background(player)
             draw.world(world, player)
             draw.fps(clock)
             draw.aim()

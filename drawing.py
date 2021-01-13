@@ -1,4 +1,4 @@
-from math import tan, cos, radians
+from math import *
 import pygame
 from settings import *
 from ray import ray_cast
@@ -416,15 +416,41 @@ class Drawing:
         self.screen = screen
         self.rc = rc
 
-    def background(self):
-        pygame.draw.rect(
-            self.screen,
-            (117, 187, 253),
-            (0, 0, WIDTH, HEIGHT // 2)
+    def background(self, player):
+        # Попытка сделать паралакс,
+        # домножение на sin(vx + 90) и cos(vx + 90)
+        # даёт возможность отделить перемещение влево/вправо
+        # от перемещения вперёд/назад, но даёт негативный эффект
+        # в виде перемещения неба в сторону поворота камерой
+        # sky_offset = round(
+        #     player.x * cos(radians(player.vx + 90)) +
+        #     player.y * sin(radians(player.vx + 90))
+        # )
+        sky_offset = round(-player.vx / FOV * WIDTH)
+        sky_size = self.rc.get('world_sky').get_rect().size
+        sky_size = (
+            round(sky_size[0] / sky_size[1] * HEIGHT / 2),
+            HEIGHT // 2
         )
+        sky = pygame.transform.scale(
+            self.rc.get('world_sky'),
+            sky_size
+        )
+        
+        # Заполнения всей ширины экрана бесшовной текстурой неба
+        for i in range(
+            sky_offset % sky_size[0] - sky_size[0],
+            WIDTH,
+            sky_size[0]
+        ):
+            self.screen.blit(
+                sky,
+                (i, 0)
+            )
+
         pygame.draw.rect(
             self.screen,
-            (40, 25, 15),
+            (15, 15, 25),
             (0, HEIGHT // 2, WIDTH, HEIGHT // 2)
         )
 

@@ -68,8 +68,8 @@ class WorldSprite(sprite.Sprite):
     
     def set_scale(self, scale):
         self.rect.size = (
-            scale * self.sprite_h,
-            scale * self.sprite_h * self.sprite_scale_k
+            min(scale * self.sprite_h, HEIGHT * 2),
+            min(scale * self.sprite_h, HEIGHT * 2) * self.sprite_scale_k
         )
 
         self.image = transform.scale(
@@ -101,7 +101,7 @@ class WorldSprite(sprite.Sprite):
             (self.sprite_y - player.y) ** 2
         ) ** 0.5
 
-        self.set_scale(DIST / max(sprite_distance, 0.1))
+        self.set_scale(DIST / max(sprite_distance, 0.5))
 
     def update(self, player):
         self.update_perspective(player)
