@@ -1,26 +1,132 @@
 from math import cos, sin, radians
+from multiprocessing import Event
+import threading
 import pygame
 from settings import *
 from controllers import *
 from world import *
 from player import Player
 from ray import ray_cast
-from drawing import Drawing
+from drawing import *
 
 
-if __name__ == '__main__':
-    pygame.init()
-    pygame.display.set_caption('Cosmic Occasion')
-
-    size = WIDTH, HEIGHT
-    screen = pygame.display.set_mode(size)
-
-    # Инициализация ресурсов
-    rc = ResourceController()
-
+def loading_resources(kill_event):
     rc.load('game_music', 'sounds/game.mp3')
     rc.load('menu_music', 'sounds/menu.mp3')
     rc.load('gun_sound', 'sounds/gun.mp3')
+    rc.load('button_sound', 'sounds/button_pressed.mp3')
+
+    rc.load(
+        'font_guardianlai_w/14',
+        pygame.font.Font('font/guardianlai.ttf', WIDTH // 14)
+    )
+    rc.load(
+        'font_RussoOne_w/20',
+        pygame.font.Font('font/RussoOne.ttf', WIDTH // 20)
+    )
+    rc.load(
+        'font_RussoOne_40',
+        pygame.font.Font('font/RussoOne.ttf', 40)
+    )
+    rc.load(
+        'font_Jura_22',
+        pygame.font.Font('font/Jura.ttf', 22)
+    )
+
+    rc.load(
+        'title_text',
+        Text(
+            rc,
+            0, 0, WIDTH, WIDTH // 7,
+            text='COSMIC OCCASION',
+            text_color=(255, 255, 255),
+            font=rc.get('font_guardianlai_w/14')
+        )
+    )
+
+    button_resources = []
+    for folder in ['normal', 'hover', 'clicked']:
+        for img in ['start', 'between', 'middle', 'end']:
+            button_resources.append('btn_' + folder + '_' + img)
+
+    button_text_attributes = {
+        'text_color': (171, 242, 255),
+        'text_color_hover': (194, 244, 255),
+        'text_color_clicked': (143, 201, 213),
+        'font': rc.get('font_RussoOne_40')
+    }
+
+    for i, (button_key, button_text) in enumerate([
+        ('start_button', 'НАЧАТЬ'),
+        ('settings_button', 'НАСТРОЙКИ'),
+        ('exit_button', 'ВЫХОД'),
+        ('back_button', 'НАЗАД')
+    ]):
+        rc.load(
+            button_key,
+            Button(
+                rc,
+                WIDTH // 2 - 210, WIDTH // 7 + 120 * i, 420, 100,
+                *button_resources,
+                **button_text_attributes,
+                text=button_text
+            )
+        )
+
+
+    for i, (key, subtitle, min_value, max_value, cur_value) in enumerate([
+        ('music_volume', 'Громкость музыки', 0, 100, 100),
+        ('sound_volume', 'Громкость звуков', 0, 100, 100),
+        ('rays_amount', 'Количество лучей', 30, 600, 100)
+    ]):
+        block_margin = 100
+        block_width = 420
+        slider_margin = 50
+        slider_width = 345
+        rc.load(
+            key + '_subtitle',
+            Text(
+                rc,
+                (WIDTH - block_width) // 2,
+                WIDTH // 7 + i * block_margin,
+                block_width,
+                50,
+                text=subtitle,
+                font=rc.get('font_Jura_22'),
+                align='left'
+            )
+        )
+        rc.load(
+            key + '_slider',
+            Slider(
+                rc,
+                (WIDTH - block_width) // 2,
+                WIDTH // 7 + slider_margin + i * block_margin,
+                slider_width,
+                35,
+                'slider_start',
+                'slider_start_between',
+                'slider_end_between',
+                'slider_end',
+                'slider_pointer',
+                min_value=min_value,
+                max_value=max_value,
+                current_value=cur_value
+            )
+        )
+        rc.load(
+            key + '_label',
+            Text(
+                rc,
+                (WIDTH - block_width) // 2 + slider_width + 5,
+                WIDTH // 7 + slider_margin + i * block_margin,
+                block_width - slider_width - 5,
+                35,
+                text='0',
+                font=rc.get('font_Jura_22'),
+                align='left'
+            )
+        )
 
     for folder in ['normal', 'hover', 'clicked']:
         for img in ['start', 'between', 'middle', 'end']:
@@ -97,6 +203,103 @@ if __name__ == '__main__':
         )
     
     rc.load('sprite', 'images/sprite.png', alpha=True)
+    
+    kill_event.set()
+
+
+if __name__ == '__main__':
+    pygame.init()
+    pygame.display.set_caption('Cosmic Occasion')
+
+    size = WIDTH, HEIGHT
+    screen = pygame.display.set_mode(size)
+
+    # Инициализация ресурсов
+    max_resources_amount = 77
+    rc = ResourceController()
+
+    kill_event = Event()
+    loading_resources_thread = threading.Thread(
+        target=loading_resources,
+        args=(kill_event, )
+    )
+    loading_resources_thread.setDaemon(True)
+    loading_resources_thread.start()
+
+    while not kill_event.is_set():
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+
+        if rc.is_exists('menu_background'):
+            background_image = pygame.transform.scale(
+                rc.get('menu_background'),
+                (WIDTH, HEIGHT)
+            )
+            screen.blit(background_image, (0, 0))
+        else:
+            pygame.draw.rect(
+                screen,
+                (10, 20, 40),
+                (0, 0, WIDTH, HEIGHT)
+            )
+
+        if rc.is_exists('font_RussoOne_w/20'):
+            font = rc.get('font_RussoOne_w/20')
+        else:
+            font = pygame.font.SysFont('Arial', WIDTH // 19, bold=True)
+
+        text_a = font.render(
+            'Загрузка ресурсов',
+            False,
+            (255, 255, 255)
+        )
+        text_b = font.render(
+            str(len(rc.resources)) + '/' + str(max_resources_amount),
+            False,
+            (255, 255, 255)
+        )
+
+        screen.blit(
+            text_a,
+            (
+                (WIDTH - text_a.get_size()[0]) / 2,
+                50
+            )
+        )
+        screen.blit(
+            text_b,
+            (
+                (WIDTH - text_b.get_size()[0]) / 2,
+                70 + text_a.get_size()[1]
+            )
+        )
+
+        pygame.draw.rect(
+            screen,
+            (255, 255, 255),
+            (
+                WIDTH / 10,
+                90 + text_a.get_size()[1] + text_b.get_size()[1],
+                WIDTH * 8 / 10,
+                WIDTH / 20
+            ),
+            width=3
+        )
+        pygame.draw.rect(
+            screen,
+            (23, 147, 229),
+            (
+                WIDTH / 10 + 5,
+                90 + text_a.get_size()[1] + text_b.get_size()[1] + 5,
+                (WIDTH * 8 / 10 - 10) * (
+                    len(rc.resources) / max_resources_amount
+                ),
+                WIDTH / 20 - 10
+            )
+        )
+
+        pygame.display.flip()
 
     player = Player(100, 100)
     world = World([

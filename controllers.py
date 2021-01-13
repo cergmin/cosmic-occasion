@@ -57,7 +57,7 @@ class ResourceController:
     
     def load_img(self, key, path, rewrite=False, alpha=False,
                  max_width=None, max_height=None, **args):
-        if not rewrite and key in self.resources:
+        if not rewrite and self.is_exists(key):
             return
         
         img = image.load(path)
@@ -105,7 +105,7 @@ class ResourceController:
         }
 
     def get(self, key, full_info=False):
-        if key not in self.resources:
+        if not self.is_exists(key):
             raise KeyError(
                 'There is no resource with key \'' + str(key) + '\''
             )
@@ -116,3 +116,6 @@ class ResourceController:
             return self.resources[key]
         else:
             return self.resources[key]['resource']
+    
+    def is_exists(self, key):
+        return key in self.resources

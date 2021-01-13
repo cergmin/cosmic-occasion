@@ -450,7 +450,7 @@ class Drawing:
 
         pygame.draw.rect(
             self.screen,
-            (15, 15, 25),
+            (60, 60, 90),
             (0, HEIGHT // 2, WIDTH, HEIGHT // 2)
         )
 
@@ -597,115 +597,11 @@ class Drawing:
                         (HEIGHT - wall_height) // 2
                     )
                 )
-    
-    def load_menu_resources(self):
-        self.rc.load('button_sound', 'sounds/button_pressed.mp3')
-
-        self.rc.load(
-            'title_text',
-            Text(
-                self.rc,
-                0, 0, WIDTH, WIDTH // 7,
-                text='COSMIC OCCASION',
-                text_color=(255, 255, 255),
-                font=pygame.font.Font('font/guardianlai.ttf', WIDTH // 14)
-            )
-        )
-
-        button_resources = []
-        for folder in ['normal', 'hover', 'clicked']:
-            for img in ['start', 'between', 'middle', 'end']:
-                button_resources.append('btn_' + folder + '_' + img)
-
-        button_text_attributes = {
-            'text_color': (171, 242, 255),
-            'text_color_hover': (194, 244, 255),
-            'text_color_clicked': (143, 201, 213),
-            'font': pygame.font.Font('font/RussoOne.ttf', 40)
-        }
-
-        for i, (button_key, button_text) in enumerate([
-            ('start_button', 'НАЧАТЬ'),
-            ('settings_button', 'НАСТРОЙКИ'),
-            ('exit_button', 'ВЫХОД'),
-            ('back_button', 'НАЗАД')
-        ]):
-            self.rc.load(
-                button_key,
-                Button(
-                    self.rc,
-                    WIDTH // 2 - 210, WIDTH // 7 + 120 * i, 420, 100,
-                    *button_resources,
-                    **button_text_attributes,
-                    text=button_text
-                )
-            )
-
-
-        for i, (key, subtitle, min_value, max_value, cur_value) in enumerate([
-            ('music_volume', 'Громкость музыки', 0, 100, 100),
-            ('sound_volume', 'Громкость звуков', 0, 100, 100),
-            ('rays_amount', 'Количество лучей', 30, 600, 100)
-        ]):
-            block_margin = 100
-            block_width = 420
-            slider_margin = 50
-            slider_width = 345
-            self.rc.load(
-                key + '_subtitle',
-                Text(
-                    self.rc,
-                    (WIDTH - block_width) // 2,
-                    WIDTH // 7 + i * block_margin,
-                    block_width,
-                    50,
-                    text=subtitle,
-                    font=pygame.font.Font(
-                        'font/Jura.ttf', 22
-                    ),
-                    align='left'
-                )
-            )
-            self.rc.load(
-                key + '_slider',
-                Slider(
-                    self.rc,
-                    (WIDTH - block_width) // 2,
-                    WIDTH // 7 + slider_margin + i * block_margin,
-                    slider_width,
-                    35,
-                    'slider_start',
-                    'slider_start_between',
-                    'slider_end_between',
-                    'slider_end',
-                    'slider_pointer',
-                    min_value=min_value,
-                    max_value=max_value,
-                    current_value=cur_value
-                )
-            )
-            self.rc.load(
-                key + '_label',
-                Text(
-                    self.rc,
-                    (WIDTH - block_width) // 2 + slider_width + 5,
-                    WIDTH // 7 + slider_margin + i * block_margin,
-                    block_width - slider_width - 5,
-                    35,
-                    text='0',
-                    font=pygame.font.Font(
-                        'font/Jura.ttf', 22
-                    ),
-                    align='left'
-                )
-            )
 
     def menu(self, menu_screen='main'):
         action = ''
         menu_running = True
         clock = pygame.time.Clock()
-
-        self.load_menu_resources()
 
         title_text = self.rc.get('title_text')
         start_button = self.rc.get('start_button')
