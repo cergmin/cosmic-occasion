@@ -3,6 +3,7 @@ from multiprocessing import Event
 import threading
 import pygame
 from settings import *
+from utilities import *
 from controllers import *
 from world import *
 from player import Player
@@ -314,16 +315,24 @@ if __name__ == '__main__':
     ])
     
     world.add_sprite(
-        WorldSprite(
-            300, 100, 350, 'sprite', rc
+        Enemy(
+            300, 100, 350, 'sprite', rc,
+            health=100,
+            damage=10,
+            speed=50,
+            visual_range=300,
         )
     )
 
-    world.add_sprite(
-        WorldSprite(
-            300, 400, 350, 'sprite', rc
-        )
-    )
+    # world.add_sprite(
+    #     Enemy(
+    #         300, 400, 350, 'sprite', rc,
+    #         health=100,
+    #         damage=10,
+    #         speed=50,
+    #         visual_range=300,
+    #     )
+    # )
 
     gun = Weapon(
         ['gun'], ['aimed_gun'],
@@ -363,6 +372,7 @@ if __name__ == '__main__':
                     gun.set_state(
                         'aimed_shot' if is_aiming else 'shot'
                     )
+                    world.update_sprites(player, 0, shot=True)
                 elif event.button == 3:
                     is_aiming = not is_aiming
                     
@@ -414,12 +424,13 @@ if __name__ == '__main__':
             rc.get('game_music').play(loops=-1)
             rc.get('menu_music').stop()
         else:
+            world.update_sprites(player, tick)
+
             draw.background(player)
             draw.world(world, player)
             draw.fps(clock)
             draw.aim()
             gun.update(tick)
             draw.weapon(gun)
-
         pygame.display.flip()
     pygame.quit()

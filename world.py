@@ -1,6 +1,8 @@
 from math import *
 from pygame.mixer import Sound
 from pygame import sprite, transform
+from ray import ray_cast
+from utilities import *
 from settings import *
 
 
@@ -9,6 +11,7 @@ class World:
         self.map = list(map)
         self.objects = dict()
         self.sprite_group = sprite.Group()
+        self.route_hash = dict()
 
         for i, row in enumerate(self.map):
             for j, obj_char in enumerate(row):
@@ -39,9 +42,48 @@ class World:
     def add_sprite(self, sprite):
         self.sprite_group.add(sprite)
     
-    def update_sprites(self, player):
-        self.sprite_group.update(player)
+    def update_sprites(self, player, tick, *args, **kwargs):
+        self.sprite_group.update(self, player, tick, *args, **kwargs)
 
+    def get_route(self, x1, y1, x2, y2, visited_cells=None):
+        x1, y1, x2, y2 = map(int, (x1, y1, x2, y2))
+
+        if visited_cells is None:
+            visited_cells = dict()
+
+        visited_cells[x1, y1] = True
+
+        if (x1, y1) == (x2, y2):
+            return [(x1, y1)]
+
+        if (x1, y1, x2, y2) in self.route_hash:
+            return self.route_hash[x1, y1, x2, y2]
+
+        best_route = []
+        for i, j in [
+            (x1 + 1, y1),
+            (x1, y1 + 1),
+            (x1 - 1, y1),
+            (x1, y1 - 1)
+        ]:
+            if (i, j) in visited_cells and visited_cells[i, j]:
+                continue
+
+            if (GRID_SIZE * i, GRID_SIZE * j) in self.objects or not \
+               (0 <= j < len(self.map) and 0 <= i < len(self.map[j])):
+                continue
+            
+            route = self.get_route(i, j, x2, y2, visited_cells)
+            visited_cells[i, j] = False
+
+            if len(route) > 0 and (
+                len(best_route) == 0 or
+                len(best_route) > len(route) + 1
+            ):
+                best_route = [(x1, y1)] + route
+
+        self.route_hash[x1, y1, x2, y2] = best_route
+        return best_route
 
 class WorldSprite(sprite.Sprite):
     def __init__(self, sprite_x, sprite_y, sprite_height, image, rc):
@@ -64,7 +106,16 @@ class WorldSprite(sprite.Sprite):
     def draw(self, screen):
         # Собственная функция рисования,
         # чтобы можно было рисовать спрайты по отдельности
-        screen.blit(self.image, self.rect)
+
+        if WIDTH > self.rect.x > -self.rect.size[0]:
+            screen.blit(self.image, self.rect)
+    
+    def get_distance(self, player):
+        # Получение расстояние до игрока
+        return (
+            (self.sprite_x - player.x) ** 2 +
+            (self.sprite_y - player.y) ** 2
+        ) ** 0.5
     
     def set_scale(self, scale):
         self.rect.size = (
@@ -96,15 +147,147 @@ class WorldSprite(sprite.Sprite):
         )
 
         # Изменение размера спрайта относительно положения игрока
-        sprite_distance = (
-            (self.sprite_x - player.x) ** 2 +
-            (self.sprite_y - player.y) ** 2
-        ) ** 0.5
+        self.set_scale(DIST / max(self.get_distance(player), 0.5))
 
-        self.set_scale(DIST / max(sprite_distance, 0.5))
-
-    def update(self, player):
+    def update(self, world, player, tick, *args, **kwargs):
         self.update_perspective(player)
+
+
+class Enemy(WorldSprite):
+    def __init__(self, sprite_x, sprite_y, sprite_height, image, rc,
+                 health=100, damage=10, speed=100, visual_range=200):
+        super().__init__(sprite_x, sprite_y, sprite_height, image, rc)
+        
+        self.health = max(0, health)
+        self.damage = damage
+        self.speed = speed
+        self.visual_range = visual_range
+    
+    def check_direct_visibility(self, world, player):
+        distance_to_player = self.get_distance(player)
+
+        angle_to_player = degrees(
+            atan2(
+                player.y - self.sprite_y,
+                player.x - self.sprite_x
+            )
+        )
+
+        distance_to_first_object = ray_cast(
+            world,
+            self.sprite_x,
+            self.sprite_y,
+            angle_to_player,
+            max_depth=(distance_to_player + 5)
+        )[0]
+
+        return distance_to_first_object >= distance_to_player
+
+
+    def get_shot(self, player):
+        # Определение того, насколько точно попали во врага
+        # и убавление уровня здоровья
+        sprite_angle = degrees(
+            atan2(
+                player.y - self.sprite_y,
+                player.x - self.sprite_x
+            )
+        )
+
+        delta_angle = (sprite_angle - player.vx) % 360
+        delta_angle = 180 - delta_angle
+
+        # delta_pixel = (FOV / 2 - delta_angle) / FOV * WIDTH
+
+        if delta_angle <= 5:
+            self.health -= 100
+        
+        # if abs(
+        #     self.rc.get(self.sprite_image).get_rect().size[0] / 2 -
+        #     delta_pixel
+        # ) <= self.rc.get(self.sprite_image).get_rect().size[0] / 2:
+        #     self.health -= 100
+
+    def atack(self, player):
+        pass
+    
+    # Честное построение маршрута от врага до игрока
+    # с обхождением препятствий. Метод основан на dfs,
+    # клетка карты представляется в виле вершины графа,
+    # у которой может быть от 1 до 4 рёбер.
+    def move_dfs(self, world, tick, x, y):
+        route = world.get_route(
+            int(self.sprite_x // GRID_SIZE),
+            int(self.sprite_y // GRID_SIZE),
+            int(x // GRID_SIZE),
+            int(y // GRID_SIZE)
+        )
+
+        if len(route) < 2:
+            return False
+
+        next_position = (
+            route[1][0] * GRID_SIZE + GRID_SIZE / 2,
+            route[1][1] * GRID_SIZE + GRID_SIZE / 2,
+        )
+        
+        # Метод прямого перемещения используется,
+        # чтобы присутствовала коллизия с объектами
+        self.move_direct(world, tick, *next_position)
+
+    # Движение к игроку напрямую с учётом коллизий.
+    # Не обхожит препятсвия, но зато работает бысрее,
+    # чем Enemy.move_dfs(...)
+    def move_direct(self, world, tick, x, y, stop_distance=40):
+        distance = self.speed * tick
+
+        move_direction = atan2(
+            y - self.sprite_y,
+            x - self.sprite_x
+        )
+
+        ray_distance_y = ray_cast(
+            world,
+            self.sprite_x,
+            self.sprite_y,
+            (90 if 0 <= degrees(move_direction) <= 180 else -90),
+            max_depth=(distance + 1)
+        )[0]
+
+        ray_distance_x = ray_cast(
+            world,
+            self.sprite_x,
+            self.sprite_y,
+            (180 if 90 <= degrees(move_direction) <= 270 else 0),
+            max_depth=(distance + 1)
+        )[0]
+        
+        if ray_distance_x > (stop_distance + distance):
+            self.sprite_x += distance * cos(move_direction)
+        else:
+            self.sprite_x += (ray_distance_x - stop_distance) * \
+                             cos(move_direction)
+        
+        if ray_distance_y > (stop_distance + distance):
+            self.sprite_y += distance * sin(move_direction)
+        else:
+            self.sprite_y += (ray_distance_y - stop_distance) * \
+                             sin(move_direction)
+
+    def update(self, world, player, tick, *args, **kwargs):
+        self.update_perspective(player)
+
+        if 'shot' in kwargs and kwargs['shot']:
+            self.get_shot(player)
+
+            if self.health <= 0:
+                world.sprite_group.remove(self)
+
+        if self.get_distance(player) <= self.visual_range:
+            if self.check_direct_visibility(world, player):
+                self.move_direct(world, tick, player.x, player.y)
+            else:
+                self.move_dfs(world, tick, player.x, player.y)
 
 
 class WorldObject:

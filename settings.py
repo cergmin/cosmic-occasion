@@ -1,8 +1,8 @@
 from math import radians, tan
 
 GRID_SIZE = 60
-WIDTH = 1440
-HEIGHT = 900
+WIDTH = 1280
+HEIGHT = 720
 RAYS_AMOUNT = 100
 
 FOV = 60  # Угол зрения игрока
