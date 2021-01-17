@@ -469,7 +469,6 @@ class Drawing:
     def world(self, world, player):
         z_buffer = []
 
-        world.update_sprites(player)
         for sprite in world.sprite_group:
             sprite_distance = (
                 (sprite.sprite_x - player.x) ** 2 +
@@ -507,7 +506,7 @@ class Drawing:
         for depth, obj_info, obj_data in sorted(
             z_buffer, key=lambda x: x[0], reverse=True
         ):
-            if obj_info['type'] == 'WorldSprite':
+            if obj_info['type'] in ['WorldSprite', 'Enemy']:
                 sprite = obj_data
                 sprite.draw(self.screen)
             elif obj_info['type'] == 'Wall':
