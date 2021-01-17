@@ -1,4 +1,5 @@
 from math import cos, sin, radians
+from random import randint
 from multiprocessing import Event
 import threading
 import pygame
@@ -302,38 +303,22 @@ if __name__ == '__main__':
 
         pygame.display.flip()
 
-    player = Player(100, 100)
-    world = World([
-        ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w'],
-        ['w', '.', '.', '.', '.', '.', '.', 'w'],
-        ['w', 'w', 'w', 'w', '.', 'w', '.', 'w'],
-        ['w', '.', '.', 'w', '.', 'w', '.', 'w'],
-        ['w', '.', '.', 'w', '.', 'w', '.', 'w'],
-        ['w', '.', '.', 'w', '.', 'w', 'w', 'w'],
-        ['w', '.', '.', '.', '.', '.', '.', 'w'],
-        ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w']
-    ])
+    player = Player(100, 330)
+    world = World('''
+        wwwwwwwwwwwwwwwwwwwww
+        w.w.............w...w
+        w.w.w.wwwww.www.w.www
+        w...w.ww.....w......w
+        wwwww.ww.....w.www.ww
+        w......w.....w.w...ww
+        wwwww.wwww.www.w.wwww
+        w.w.w.w....w...w....w
+        w...w.wwww.w.wwwwww.w
+        w..........w........w
+        wwwwwwwwwwwwwwwwwwwww
+    ''')
 
-    spawn_points = [
-        (400, 80),
-        (400, 270),
-        (270, 200),
-        (400, 380),
-        (120, 220)
-    ]
-
-    for x, y in spawn_points:
-        world.add_sprite(
-            Enemy(
-                x, y, 350, 'sprite', rc,
-                health=100,
-                damage=10,
-                speed=50,
-                visual_range=300,
-                collider_width='93%',
-                collider_offset='5%'
-            )
-        )
+    max_enemies_amount = 50
 
     gun = Weapon(
         WeaponBullet(60),
@@ -417,6 +402,36 @@ if __name__ == '__main__':
             player.move(world, 90, player.speed * tick)
         if keys[pygame.K_ESCAPE]:
             menu_opened = True
+
+        # Поддержание количества врагов на определённом значении
+        for i in range(max_enemies_amount - len(world.sprite_group)):
+            while True:
+                y = randint(0, len(world.map) - 1)
+                x = randint(0, len(world.map[y]) - 1)
+    
+                if is_cell_empty(
+                    x, y, world.map,
+                    busy_cells=get_cells_around(
+                        *mapping(player.x, player.y),
+                        radius=2
+                    )
+                ):
+                    x *= GRID_SIZE
+                    y *= GRID_SIZE
+                    break
+            
+            world.add_sprite(
+                Enemy(
+                    x, y, 350, 'sprite', rc,
+                    health=100,
+                    damage=10,
+                    speed=50,
+                    visual_range=300,
+                    collider_width='93%',
+                    collider_offset='5%'
+                )
+            )
+            print(len(world.sprite_group))
 
         if menu_opened:
             # Показываем и "отпускаем" курсор

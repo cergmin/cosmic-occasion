@@ -8,7 +8,12 @@ from settings import *
 
 class World:
     def __init__(self, map):
-        self.map = list(map)
+        self.map = list(
+            filter(
+                lambda x: len(x) > 0,
+                map.replace(' ', '').split('\n')
+            )
+        )
         self.objects = dict()
         self.sprite_group = sprite.Group()
         self.route_hash = dict()
