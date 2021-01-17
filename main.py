@@ -318,10 +318,10 @@ if __name__ == '__main__':
         wwwwwwwwwwwwwwwwwwwww
     ''')
 
-    max_enemies_amount = 50
+    max_enemies_amount = 20
 
     gun = Weapon(
-        WeaponBullet(60),
+        WeaponBullet(90),
         ['gun'], ['aimed_gun'],
         ['shot_' + str(i) for i in range(1, 11)],
         ['aiming_' + str(i) for i in range(1, 11)],
@@ -431,7 +431,6 @@ if __name__ == '__main__':
                     collider_offset='5%'
                 )
             )
-            print(len(world.sprite_group))
 
         if menu_opened:
             # Показываем и "отпускаем" курсор
@@ -466,6 +465,8 @@ if __name__ == '__main__':
             draw.world(world, player)
             draw.fps(clock)
             draw.aim()
+            draw.minimap(world, player)
+
             gun.update(tick)
             draw.weapon(gun)
         pygame.display.flip()

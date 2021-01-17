@@ -20,5 +20,4 @@ def get_cells_around(x, y, radius=1):
 
 
 def is_cell_empty(x, y, map, empty_chars=['.'], busy_cells=[]):
-   print(x, y)
    return map[y][x] in empty_chars and (x, y) not in busy_cells

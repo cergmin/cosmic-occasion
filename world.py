@@ -1,6 +1,6 @@
 from math import *
 from pygame.mixer import Sound
-from pygame import sprite, transform
+from pygame import Surface, draw, sprite, transform
 from ray import ray_cast
 from utilities import *
 from settings import *
@@ -43,6 +43,58 @@ class World:
                     assert ValueError(
                         f"Object '{obj_char}' is undefined"
                     )
+        
+        self.map_surface = Surface((
+            len(self.map[0]) * 100,
+            len(self.map) * 100
+        ))
+        self.draw_map()
+    
+    def draw_map(self):
+        for i in range(len(self.map)):
+            for j in range(len(self.map[i])):
+                color = (255, 0, 0)
+                border_color = None
+
+                if self.map[i][j] in ['w', 'W']:
+                    color = (255, 255, 255)
+                elif self.map[i][j] == '.':
+                    color = (197, 193, 186)
+                    border_color = (150, 150, 150)
+
+                draw.rect(
+                    self.map_surface,
+                    color,
+                    (
+                        j * 100,
+                        i * 100,
+                        100,
+                        100
+                    )
+                )
+
+                for di, dj, dx1, dy1, dx2, dy2, condition in [
+                    (-1, 0, 0, 0, 1, 0, i < len(self.map) - 1),
+                    (0, -1, 0, 0, 0, 1, j < len(self.map[0]) - 1),
+                    (1, 0, 0, 1, 1, 1, i > 0),
+                    (0, 1, 1, 0, 1, 1, j > 0)
+                ]:
+                    if border_color is not None and \
+                       condition and \
+                       self.map[i - di][j + dj] != self.map[i][j]:
+                        draw.line(
+                            self.map_surface,
+                            border_color,
+                            (
+                                (j + dx1) * 100 - 2.5,
+                                (i - dy1 + 1) * 100 - 2.5
+                            ),
+                            (
+                                (j + dx2) * 100 - 2.5,
+                                (i - dy2 + 1) * 100 - 2.5
+                            ),
+                            5
+                        )
     
     def add_sprite(self, sprite):
         self.sprite_group.add(sprite)

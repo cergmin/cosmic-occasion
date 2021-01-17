@@ -415,6 +415,177 @@ class Drawing:
     def __init__(self, screen, rc):
         self.screen = screen
         self.rc = rc
+    
+    def fps(self, clock):
+        fps_amount = str(int(clock.get_fps()))
+        font = pygame.font.SysFont('Arial', 36, bold=True)
+        text = font.render(fps_amount, False, (255, 0, 0))
+        self.screen.blit(
+            text,
+            (
+                WIDTH - text.get_size()[0] - 7,
+                0
+            )
+        )
+    
+    def minimap(self, world, player):
+        map_scale = 30 / GRID_SIZE
+        map_offset = (
+            -200 * map_scale,
+            -200 * map_scale
+        )
+        sprites_offset = (
+            0 * map_scale,
+            -260 * map_scale
+        )
+        map_size = (200, 200)
+        map_full_size = (
+            len(world.map[0]) * GRID_SIZE * map_scale,
+            len(world.map) * GRID_SIZE * map_scale
+        )
+        map_real_size = (
+            len(world.map[0]) * GRID_SIZE,
+            len(world.map) * GRID_SIZE
+        )
+
+        # Фон всей карты
+        pygame.draw.rect(
+            self.screen,
+            (255, 255, 255),
+            (
+                0,
+                HEIGHT - map_size[1],
+                map_size[0],
+                map_size[1]
+            )
+        )
+ 
+        map_surface = pygame.transform.scale(
+            world.map_surface,
+            (
+                int(map_full_size[0]),
+                int(map_full_size[1])
+            )
+        )
+
+        map_subsurface_size = [0, 0, 0, 0]
+
+        map_subsurface_size[0] = (
+            player.x / map_real_size[0] * map_full_size[0] + map_offset[0]
+        )
+
+        map_subsurface_size[1] = (
+            player.y / map_real_size[1] * map_full_size[1] + map_offset[1]
+        )
+
+        map_subsurface_size[2] = min(
+            map_size[0],
+            map_full_size[0] - map_subsurface_size[0]
+        )
+
+        map_subsurface_size[3] = min(
+            map_size[1],
+            map_full_size[1] - map_subsurface_size[1]
+        )
+
+        map_surface = map_surface.subsurface((
+            max(0, map_subsurface_size[0]),
+            max(0, map_subsurface_size[1]),
+            map_subsurface_size[2] - max(0, -map_subsurface_size[0]),
+            map_subsurface_size[3]
+        ))
+
+        self.screen.blit(
+            map_surface,
+            (
+                max(0, -map_subsurface_size[0]),
+                HEIGHT - map_size[1] + max(0, -map_subsurface_size[1])
+            )
+        )
+
+        # Маркеры врагов
+        for enemy in world.sprite_group:
+            enemy_x = enemy.sprite_x / map_real_size[0] * \
+                      map_full_size[0] + sprites_offset[0]
+            enemy_y = (map_real_size[1] - enemy.sprite_y) / \
+                      map_real_size[1] * map_full_size[1] + sprites_offset[1]
+
+            if enemy_x - map_subsurface_size[0] > map_size[0] or \
+               HEIGHT - enemy_y - map_subsurface_size[1] < \
+               HEIGHT - map_size[1]:
+                continue
+
+            for radius, color in [
+                (10, (255, 255, 255)),
+                (8, (245, 52, 50)),
+                (3, (255, 255, 255))
+            ]:
+                pygame.draw.circle(
+                    self.screen,
+                    color,
+                    (
+                        min(
+                            map_size[0],
+                            enemy_x - map_subsurface_size[0]
+                        ),
+                        max(
+                            HEIGHT - map_size[1],
+                            HEIGHT - enemy_y - map_subsurface_size[1]
+                        )
+                    ),
+                    radius
+                )
+        
+        # Стерлка взгляда игрока для маркера
+        arrow_points = []
+        for radius, deg in [
+            (10, player.vx - 45),
+            (17, player.vx),
+            (10, player.vx + 45)
+        ]:
+            arrow_points.append((
+                map_size[0] / 2 + radius * cos(radians(deg)),
+                HEIGHT - map_size[0] / 2  + radius * sin(radians(deg))
+            ))
+
+        pygame.draw.polygon(
+            self.screen,
+            (200, 10, 10),
+            arrow_points
+        )
+        
+        # Маркер игрока
+        pygame.draw.circle(
+            self.screen,
+            (150, 150, 150),
+            (
+                map_size[0] / 2,
+                HEIGHT - map_size[0] / 2
+            ),
+            11
+        )
+        pygame.draw.circle(
+            self.screen,
+            (255, 255, 255),
+            (
+                map_size[0] / 2,
+                HEIGHT - map_size[0] / 2
+            ),
+            10
+        )
+        font = pygame.font.SysFont('Arial', 16, bold=True)
+        text = font.render(
+            'Я',
+            True,
+            (200, 10, 10)
+        )
+        self.screen.blit(
+            text,
+            (
+                (map_size[0] - text.get_rect().size[0]) / 2,
+                HEIGHT - (map_size[0] + text.get_rect().size[1]) / 2
+            )
+        )
 
     def background(self, player):
         # Попытка сделать паралакс,
@@ -452,18 +623,6 @@ class Drawing:
             self.screen,
             (60, 60, 90),
             (0, HEIGHT // 2, WIDTH, HEIGHT // 2)
-        )
-
-    def fps(self, clock):
-        fps_amount = str(int(clock.get_fps()))
-        font = pygame.font.SysFont('Arial', 36, bold=True)
-        text = font.render(fps_amount, False, (255, 0, 0))
-        self.screen.blit(
-            text,
-            (
-                WIDTH - text.get_size()[0] - 7,
-                0
-            )
         )
 
     def world(self, world, player):
