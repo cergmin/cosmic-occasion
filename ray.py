@@ -56,6 +56,7 @@ def ray_cast(world, x, y, cur_angle, max_depth=None):
             break
         
         ray_x += dx * GRID_SIZE
+
     # Определение ближайшего пересечения
     if depth_x < depth_y:
         depth = depth_x

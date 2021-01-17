@@ -313,28 +313,30 @@ if __name__ == '__main__':
         ['w', '.', '.', '.', '.', '.', '.', 'w'],
         ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w']
     ])
-    
-    world.add_sprite(
-        Enemy(
-            300, 100, 350, 'sprite', rc,
-            health=100,
-            damage=10,
-            speed=50,
-            visual_range=300,
-        )
-    )
 
-    # world.add_sprite(
-    #     Enemy(
-    #         300, 400, 350, 'sprite', rc,
-    #         health=100,
-    #         damage=10,
-    #         speed=50,
-    #         visual_range=300,
-    #     )
-    # )
+    spawn_points = [
+        (400, 80),
+        (400, 270),
+        (270, 200),
+        (400, 380),
+        (120, 220)
+    ]
+
+    for x, y in spawn_points:
+        world.add_sprite(
+            Enemy(
+                x, y, 350, 'sprite', rc,
+                health=100,
+                damage=10,
+                speed=50,
+                visual_range=300,
+                collider_width='93%',
+                collider_offset='5%'
+            )
+        )
 
     gun = Weapon(
+        WeaponBullet(60),
         ['gun'], ['aimed_gun'],
         ['shot_' + str(i) for i in range(1, 11)],
         ['aiming_' + str(i) for i in range(1, 11)],
@@ -369,21 +371,40 @@ if __name__ == '__main__':
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     rc.get(gun.sound).play()
+
                     gun.set_state(
                         'aimed_shot' if is_aiming else 'shot'
                     )
-                    world.update_sprites(player, 0, shot=True)
+
+                    gun.bullet.recover()
+                    world.update_sprites(
+                        player, 0, 
+                        shot=True,
+                        weapon_bullet=gun.get_bullet(),
+                        bullet_max_distance=ray_cast(
+                            world,
+                            player.x,
+                            player.y,
+                            player.vx
+                        )[0]
+                    )
+
+                    power_used = gun.bullet.get_max_power() - \
+                                 gun.bullet.get_power()
+
+                    # print(power_used)
+
                 elif event.button == 3:
                     is_aiming = not is_aiming
                     
                     if is_aiming:
                         gun.set_state('aiming')
-                        player.speed /= 4
-                        SENSITIVITY *= 4
+                        player.speed /= 2.5
+                        SENSITIVITY *= 2.5
                     else:
                         gun.set_state('reversed_aiming')
-                        player.speed *= 4
-                        SENSITIVITY /= 4
+                        player.speed *= 2.5
+                        SENSITIVITY /= 2.5
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:

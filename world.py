@@ -46,6 +46,11 @@ class World:
         self.sprite_group.update(self, player, tick, *args, **kwargs)
 
     def get_route(self, x1, y1, x2, y2, visited_cells=None):
+        '''Построение маршрута от (x1, y1) до (x2, y2)
+           с учётом препятствий и их обхождением. Метод основан на dfs,
+           клетка карты представляется в виде вершины графа,
+           у которой может быть от 1 до 4 рёбер.'''
+
         x1, y1, x2, y2 = map(int, (x1, y1, x2, y2))
 
         if visited_cells is None:
@@ -101,23 +106,27 @@ class WorldSprite(sprite.Sprite):
         self.rect.x = 0
         self.rect.y = (HEIGHT - self.rect.size[1]) / 2
         
+        self.scale_k = 1  # Коэффициент растяжения спрайта
         self.set_scale(1)
     
     def draw(self, screen):
-        # Собственная функция рисования,
-        # чтобы можно было рисовать спрайты по отдельности
+        '''Собственная функция рисования,
+           чтобы можно было рисовать спрайты по отдельности'''
 
         if WIDTH > self.rect.x > -self.rect.size[0]:
             screen.blit(self.image, self.rect)
     
     def get_distance(self, player):
-        # Получение расстояние до игрока
+        '''Получение расстояние до игрока'''
+
         return (
             (self.sprite_x - player.x) ** 2 +
             (self.sprite_y - player.y) ** 2
         ) ** 0.5
     
     def set_scale(self, scale):
+        self.scale_k = scale
+
         self.rect.size = (
             min(scale * self.sprite_h, HEIGHT * 2),
             min(scale * self.sprite_h, HEIGHT * 2) * self.sprite_scale_k
@@ -131,6 +140,9 @@ class WorldSprite(sprite.Sprite):
         self.rect.y = (HEIGHT - self.rect.size[1]) / 2
     
     def update_perspective(self, player):
+        '''Изменение проекции врага на экран,
+           с учётом положения игрока и поворота его взгляда'''
+
         # Изменение пололжения спрайта относительно поворота игрока
         sprite_angle = degrees(
             atan2(
@@ -155,15 +167,35 @@ class WorldSprite(sprite.Sprite):
 
 class Enemy(WorldSprite):
     def __init__(self, sprite_x, sprite_y, sprite_height, image, rc,
-                 health=100, damage=10, speed=100, visual_range=200):
+                 health=100, damage=10, speed=100, visual_range=200,
+                 collider_width=None, collider_offset=0):
         super().__init__(sprite_x, sprite_y, sprite_height, image, rc)
         
         self.health = max(0, health)
         self.damage = damage
         self.speed = speed
         self.visual_range = visual_range
+
+        if collider_width is None:
+            self.collider_width = self.rect.size[0]
+        elif type(collider_width) == str and \
+             collider_width[-1] == '%':
+            self.collider_width = self.rect.size[0] * \
+                                  float(collider_width[:-1]) / 100
+        else:
+            self.collider_width = int(collider_offset)
+
+        if type(collider_offset) == str and \
+           collider_offset[-1] == '%':
+            self.collider_offset = self.rect.size[0] * \
+                                   float(collider_offset[:-1]) / 100
+        else:
+            self.collider_offset = int(collider_offset)
     
     def check_direct_visibility(self, world, player):
+        '''Проверка возможности прямой видимости игрока врагом,
+           т.е. проверка отсутсвия стен между врагом и игроком'''
+
         distance_to_player = self.get_distance(player)
 
         angle_to_player = degrees(
@@ -184,9 +216,13 @@ class Enemy(WorldSprite):
         return distance_to_first_object >= distance_to_player
 
 
-    def get_shot(self, player):
-        # Определение того, насколько точно попали во врага
-        # и убавление уровня здоровья
+    def get_shot(self, player, weapon_bullet, bullet_max_distance):
+        '''Определение того, насколько точно попали во врага
+           и убавление уровня здоровья'''
+        
+        if bullet_max_distance <= self.get_distance(player):
+            return
+
         sprite_angle = degrees(
             atan2(
                 player.y - self.sprite_y,
@@ -197,25 +233,25 @@ class Enemy(WorldSprite):
         delta_angle = (sprite_angle - player.vx) % 360
         delta_angle = 180 - delta_angle
 
-        # delta_pixel = (FOV / 2 - delta_angle) / FOV * WIDTH
+        collider_width = self.collider_width * self.scale_k
+        delta_pixel = delta_angle * (WIDTH / FOV) - \
+                      self.collider_offset * self.scale_k
 
-        if delta_angle <= 5:
-            self.health -= 100
-        
-        # if abs(
-        #     self.rc.get(self.sprite_image).get_rect().size[0] / 2 -
-        #     delta_pixel
-        # ) <= self.rc.get(self.sprite_image).get_rect().size[0] / 2:
-        #     self.health -= 100
+        if 0 <= delta_pixel <= collider_width:
+            self.health -= weapon_bullet.take_power(
+                percentage=(
+                    1 - abs(delta_pixel - collider_width / 2) / collider_width
+                ),
+                max_power_used=self.health
+            )
 
     def atack(self, player):
         pass
-    
-    # Честное построение маршрута от врага до игрока
-    # с обхождением препятствий. Метод основан на dfs,
-    # клетка карты представляется в виле вершины графа,
-    # у которой может быть от 1 до 4 рёбер.
+
     def move_dfs(self, world, tick, x, y):
+        '''Движение по построенному маршруту от врага до игрока
+           с обхождением препятствий'''
+    
         route = world.get_route(
             int(self.sprite_x // GRID_SIZE),
             int(self.sprite_y // GRID_SIZE),
@@ -235,10 +271,10 @@ class Enemy(WorldSprite):
         # чтобы присутствовала коллизия с объектами
         self.move_direct(world, tick, *next_position)
 
-    # Движение к игроку напрямую с учётом коллизий.
-    # Не обхожит препятсвия, но зато работает бысрее,
-    # чем Enemy.move_dfs(...)
     def move_direct(self, world, tick, x, y, stop_distance=40):
+        '''Движение к игроку напрямую с учётом коллизий.
+           Не обхожит препятсвия, но зато работает бысрее,
+           чем Enemy.move_dfs(...)'''
         distance = self.speed * tick
 
         move_direction = atan2(
@@ -277,8 +313,15 @@ class Enemy(WorldSprite):
     def update(self, world, player, tick, *args, **kwargs):
         self.update_perspective(player)
 
-        if 'shot' in kwargs and kwargs['shot']:
-            self.get_shot(player)
+        if all([
+            i in kwargs
+            for i in ['shot', 'weapon_bullet', 'bullet_max_distance']
+        ]) and kwargs['shot']:
+            self.get_shot(
+                player,
+                kwargs['weapon_bullet'],
+                kwargs['bullet_max_distance']
+            )
 
             if self.health <= 0:
                 world.sprite_group.remove(self)
@@ -317,9 +360,9 @@ class TexturedWall(Wall):
 
 
 class Weapon:
-    def __init__(self, normal, aimed_normal, shot_animation, aiming_animation,
-                 aimed_shot_animation, shot_sound, shot_duration=0.5,
-                 aiming_duration=0.3):
+    def __init__(self, bullet, normal, aimed_normal, shot_animation,
+                 aiming_animation, aimed_shot_animation, shot_sound,
+                 shot_duration=0.5, aiming_duration=0.3):
         # self.animations = {
         #   'название_анимации': [
         #       массив_кадров_анимации,
@@ -347,10 +390,14 @@ class Weapon:
                 shot_duration / len(aimed_shot_animation)]
         }
 
+        self.bullet = bullet
         self.sound = shot_sound
 
         self.timer = 0
         self.state = ['normal', 0]
+    
+    def get_bullet(self):
+        return self.bullet
 
     def set_state(self, state):
         if state in self.animations:
@@ -406,3 +453,33 @@ class Weapon:
                 else:
                     self.state[1] += 1
                 self.timer -= self.animations['reversed_aiming'][1]
+
+
+class WeaponBullet:
+    def __init__(self, max_power):
+        self.max_power = max_power
+        self.power = max_power
+    
+    def recover(self):
+        self.power = self.max_power
+    
+    def get_max_power(self):
+        return self.max_power
+    
+    def get_power(self):
+        return self.power
+    
+    def take_power(self, percentage=1, max_power_used=None):
+        '''Забрать и получить часть оставшейся энергии пули'''
+
+        power_used = min(
+            self.power,
+            self.max_power * max(0, min(1, percentage))
+        )
+
+        if max_power_used is not None:
+            power_used = min(max(0, max_power_used), power_used)
+
+        self.power -= power_used
+
+        return power_used
