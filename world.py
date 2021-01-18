@@ -224,7 +224,7 @@ class WorldSprite(sprite.Sprite):
 
 class Enemy(WorldSprite):
     def __init__(self, sprite_x, sprite_y, sprite_height, image, rc,
-                 health=100, damage=4, speed=100, visibility_distance=200,
+                 health=100, damage=10, speed=100, visibility_distance=200,
                  collider_width=None, collider_offset=0, atack_distance=40):
         super().__init__(sprite_x, sprite_y, sprite_height, image, rc)
         
@@ -402,9 +402,10 @@ class Enemy(WorldSprite):
 
 
 class AnimatedEnemy(Enemy):
-    def __init__(self, sprite_x, sprite_y, sprite_height, images, rc,
-                 health=100, damage=4, speed=100, visibility_distance=200,
-                 collider_width=None, collider_offset=0, atack_distance=40,
+    def __init__(self, sprite_x, sprite_y, sprite_height, images, 
+                 attack_sound, rc, health=100, damage=10, speed=100,
+                 visibility_distance=200, collider_width=None, 
+                 collider_offset=0, atack_distance=40, 
                  states_duration={'normal': 0, 'attack': 0.5}):
         super().__init__(
             sprite_x, sprite_y, sprite_height, images['normal'][0],
@@ -420,7 +421,9 @@ class AnimatedEnemy(Enemy):
         #         'ключ_к_кадру_2_врага'
         #     ]
         # }
-        
+
+        self.attack_sound = attack_sound
+
         self.states_duration = states_duration
         self.states_list = [
             'normal',
@@ -446,8 +449,9 @@ class AnimatedEnemy(Enemy):
                 self.state[2] -= frame_duration
                 self.state[1] += 1
 
-            if self.state[1] >= len(self.images['attack']) / 2:
-                self.atack(player, 1)
+                if self.state[1] == len(self.images['attack']) / 2:
+                    self.rc.get(self.attack_sound).play()
+                    self.atack(player, 1)
 
             if self.state[1] >= len(self.images['attack']):
                 self.state = ['normal', 0, 0]

@@ -954,6 +954,29 @@ class Drawing:
                 self.rc.get('game_music').set_volume(music_volume)
                 self.rc.get('menu_music').set_volume(music_volume)
                 self.rc.get('gun_sound').set_volume(sound_volume)
+                self.rc.get('hit_sound').set_volume(sound_volume)
+
+                back_button.update_state(pygame.mouse)
+                back_button.draw(self.screen)
+                if back_button.get_state() == 'clicked-mouseup':
+                    self.rc.get('button_sound').play()
+                    menu_running = False
+            elif menu_screen == 'death':
+                Text(
+                    self.rc,
+                    0, WIDTH // 7, WIDTH, WIDTH // 19,
+                    text='ВЫ ПОГИБЛИ',
+                    text_color=(255, 255, 255),
+                    font=self.rc.get('font_RussoOne_w/20')
+                ).draw(self.screen)
+
+                Text(
+                    self.rc,
+                    0, WIDTH // 7 + WIDTH // 17, WIDTH, 36,
+                    text='Ваш счёт: 100',
+                    text_color=(255, 255, 255),
+                    font=self.rc.get('font_Jura_36')
+                ).draw(self.screen)
 
                 back_button.update_state(pygame.mouse)
                 back_button.draw(self.screen)

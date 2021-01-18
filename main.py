@@ -16,6 +16,7 @@ def loading_resources(kill_event):
     rc.load('game_music', 'sounds/game.mp3')
     rc.load('menu_music', 'sounds/menu.mp3')
     rc.load('gun_sound', 'sounds/gun.mp3')
+    rc.load('hit_sound', 'sounds/hit.mp3')
     rc.load('button_sound', 'sounds/button_pressed.mp3')
 
     rc.load(
@@ -33,6 +34,10 @@ def loading_resources(kill_event):
     rc.load(
         'font_Jura_22',
         pygame.font.Font('font/Jura.ttf', 22)
+    )
+    rc.load(
+        'font_Jura_36',
+        pygame.font.Font('font/Jura.ttf', 36)
     )
 
     rc.load(
@@ -456,7 +461,7 @@ if __name__ == '__main__':
                     x, y, world.map,
                     busy_cells=get_cells_around(
                         *mapping(player.x, player.y),
-                        radius=2
+                        radius=3
                     )
                 ):
                     x *= GRID_SIZE
@@ -475,9 +480,10 @@ if __name__ == '__main__':
                             for i in range(20)
                         ]
                     },
+                    'hit_sound',
                     rc,
                     health=100,
-                    damage=4,
+                    damage=20,
                     speed=50,
                     visibility_distance=300,
                     collider_width='93%',
@@ -523,5 +529,28 @@ if __name__ == '__main__':
 
             gun.update(tick)
             draw.weapon(gun)
+
+            if player.health <= 0:
+                # Открытие экрана смерти
+                pygame.mouse.set_visible(True)
+                pygame.event.set_grab(False)
+                rc.get('game_music').stop()
+                rc.get('menu_music').stop()
+                pygame.mouse.set_pos(WIDTH // 2, HEIGHT // 2)
+                draw.menu(menu_screen='death')
+
+                # Обнуление игры
+                player.health = player.max_health
+                player.x = 100
+                player.y = 330
+                player.vx = 0
+
+                for sprite in world.sprite_group:
+                    world.sprite_group.remove(sprite)
+                
+                
+                # Открытие главного меню
+                menu_opened = True
+                
         pygame.display.flip()
     pygame.quit()
