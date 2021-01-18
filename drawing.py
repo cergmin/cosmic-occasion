@@ -788,7 +788,7 @@ class Drawing:
         for depth, obj_info, obj_data in sorted(
             z_buffer, key=lambda x: x[0], reverse=True
         ):
-            if obj_info['type'] in ['WorldSprite', 'Enemy']:
+            if obj_info['type'] in ['WorldSprite', 'Enemy', 'RotatableEnemy']:
                 sprite = obj_data
                 sprite.draw(self.screen)
             elif obj_info['type'] == 'Wall':

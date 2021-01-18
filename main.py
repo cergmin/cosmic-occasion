@@ -236,6 +236,13 @@ def loading_resources(kill_event):
             alpha=True
         )
     
+    for i in range(0, 360, 10):
+        rc.load(
+            'enemy_biba_normal_' + str(i) + '_1',
+            f'images/enemies/biba/normal/{i}_1.png',
+            alpha=True
+        )
+    
     rc.load('sprite', 'images/sprite.png', alpha=True)
     
     kill_event.set()
@@ -249,7 +256,7 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode(size)
 
     # Инициализация ресурсов
-    max_resources_amount = 81
+    max_resources_amount = 117
     rc = ResourceController()
 
     kill_event = Event()
@@ -350,7 +357,7 @@ if __name__ == '__main__':
         wwwwwwwwwwwwwwwwwwwww
     ''')
 
-    max_enemies_amount = 50
+    max_enemies_amount = 15
 
     gun = Weapon(
         WeaponBullet(90),
@@ -449,12 +456,32 @@ if __name__ == '__main__':
                     )
                 ):
                     x *= GRID_SIZE
+                    x += GRID_SIZE / 2
                     y *= GRID_SIZE
+                    y += GRID_SIZE / 2
                     break
             
+            # world.add_sprite(
+            #     Enemy(
+            #         x, y, 350, 'enemy_biba_normal_0_1', rc,
+            #         health=100,
+            #         damage=10,
+            #         speed=50,
+            #         visibility_distance=300,
+            #         collider_width='93%',
+            #         collider_offset='5%'
+            #     )
+            # )
             world.add_sprite(
-                Enemy(
-                    x, y, 350, 'sprite', rc,
+                RotatableEnemy(
+                    x, y, 350,
+                    {
+                        'normal': {
+                            deg: ['enemy_biba_normal_' + str(deg) + '_1']
+                            for deg in range(0, 360, 10)
+                        }
+                    },
+                    rc,
                     health=100,
                     damage=10,
                     speed=50,

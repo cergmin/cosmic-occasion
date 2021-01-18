@@ -394,6 +394,93 @@ class Enemy(WorldSprite):
             self.atack(player, tick)
 
 
+class RotatableEnemy(Enemy):
+    def __init__(self, sprite_x, sprite_y, sprite_height, images, rc,
+                 health=100, damage=5, speed=100, visibility_distance=200,
+                 collider_width=None, collider_offset=0, atack_distance=40):
+        super().__init__(
+            sprite_x, sprite_y, sprite_height, images['normal'][0][0],
+            rc, health, damage, speed, visibility_distance, collider_width,
+            collider_offset, atack_distance
+        )
+
+        self.images = images
+        # Структура self.images:
+        # {
+        #     'состояние': {
+        #         0: [
+        #             'ключ_к_кадру_1_врага_под_углом_0',
+        #             'ключ_к_кадру_2_врага_под_углом_0'
+        #         ],
+        #         10: [
+        #             'ключ_к_кадру_1_врага_под_углом_10',
+        #             'ключ_к_кадру_2_врага_под_углом_10'
+        #         ]
+        #     }
+        # }
+
+        # В self.images_degrees хранятся осортированные списки углов
+        # различных состояний, для того, чтобы можно было использовать
+        # бинарный поиск для определения наиболее подходящего угла,
+        # для отображения.
+        self.images_degrees = {}
+
+        for enemy_state in self.images:
+            self.images_degrees[enemy_state] = sorted(
+                list(
+                    self.images[enemy_state]
+                )
+            )
+        
+        self.state = 'normal'
+    
+    def update_perspective(self, player):
+        '''Изменение поворота и проекции врага на экран,
+           с учётом положения игрока и поворота его взгляда'''
+
+        # Изменение пололжения спрайта относительно поворота игрока
+        sprite_angle = degrees(
+            atan2(
+                player.y - self.sprite_y,
+                player.x - self.sprite_x
+            )
+        )
+
+        delta_angle = (sprite_angle - player.vx) % 360
+        delta_angle = 180 - delta_angle
+
+        self.rect.x = (
+            (FOV / 2 - delta_angle) / FOV * WIDTH
+        )
+
+        # Изменение изображения спрайта относительно угла,
+        # под которым смотрят на врага. Изображение выбирается
+        # из доступных в self.images с помощью бинарного поиска.
+        l = 0
+        r = len(self.images_degrees[self.state]) - 1
+        c = (r + l + 1) // 2
+
+        while r - l > 0:
+            c = (r + l + 1) // 2
+
+            if self.images_degrees[self.state][c] > (sprite_angle % 360):
+                r = c - 1
+            else:
+                l = c
+        
+
+        self.sprite_image = self.images[
+            self.state
+        ][
+            self.images_degrees[self.state][l]
+        ][
+            0
+        ]
+
+        # Изменение размера спрайта относительно положения игрока
+        self.set_scale(DIST / max(self.get_distance(player), 0.5))
+
+
 class WorldObject:
     def __init__(self, x, y):
         self.x = x
@@ -424,7 +511,8 @@ class Weapon:
     def __init__(self, bullet, normal, aimed_normal, shot_animation,
                  aiming_animation, aimed_shot_animation, shot_sound,
                  shot_duration=0.5, aiming_duration=0.3):
-        # self.animations = {
+        # Структура self.animations:
+        # {
         #   'название_анимации': [
         #       массив_кадров_анимации,
         #       длительность_показа_1_кадра
