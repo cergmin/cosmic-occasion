@@ -224,7 +224,7 @@ class WorldSprite(sprite.Sprite):
 
 class Enemy(WorldSprite):
     def __init__(self, sprite_x, sprite_y, sprite_height, image, rc,
-                 health=100, damage=5, speed=100, visibility_distance=200,
+                 health=100, damage=4, speed=100, visibility_distance=200,
                  collider_width=None, collider_offset=0, atack_distance=40):
         super().__init__(sprite_x, sprite_y, sprite_height, image, rc)
         
@@ -329,12 +329,20 @@ class Enemy(WorldSprite):
         # чтобы присутствовала коллизия с объектами
         self.move_direct(world, tick, *next_position)
 
-    def move_direct(self, world, tick, x, y, stop_distance=40):
+    def move_direct(self, world, tick, x, y, stop_distance=25):
         '''Движение к игроку напрямую с учётом коллизий.
            Не обхожит препятсвия, но зато работает бысрее,
            чем Enemy.move_dfs(...)'''
         distance = self.speed * tick
 
+        dist_to_player = (
+            (x - self.sprite_x) ** 2 +
+            (y - self.sprite_y) ** 2
+        ) ** 0.5
+
+        if dist_to_player < stop_distance:
+            distance = 0
+        
         move_direction = atan2(
             y - self.sprite_y,
             x - self.sprite_x
@@ -380,7 +388,6 @@ class Enemy(WorldSprite):
                 kwargs['weapon_bullet'],
                 kwargs['bullet_max_distance']
             )
-
             if self.health <= 0:
                 world.sprite_group.remove(self)
 
@@ -392,6 +399,80 @@ class Enemy(WorldSprite):
         
         if self.get_distance(player) <= self.atack_distance:
             self.atack(player, tick)
+
+
+class AnimatedEnemy(Enemy):
+    def __init__(self, sprite_x, sprite_y, sprite_height, images, rc,
+                 health=100, damage=4, speed=100, visibility_distance=200,
+                 collider_width=None, collider_offset=0, atack_distance=40,
+                 states_duration={'normal': 0, 'attack': 0.5}):
+        super().__init__(
+            sprite_x, sprite_y, sprite_height, images['normal'][0],
+            rc, health, damage, speed, visibility_distance, collider_width,
+            collider_offset, atack_distance
+        )
+
+        self.images = images
+        # Структура self.images:
+        # {
+        #     'состояние': [
+        #         'ключ_к_кадру_1_врага',
+        #         'ключ_к_кадру_2_врага'
+        #     ]
+        # }
+        
+        self.states_duration = states_duration
+        self.states_list = [
+            'normal',
+            'attack'
+        ]
+        self.state = ['normal', 0, 0] # [название, кадр, время]
+    
+    def update(self, world, player, tick, *args, **kwargs):
+        # Запуск атаки, если игрок достаточно близко
+        if self.state[0] == 'normal' and \
+           self.get_distance(player) <= self.atack_distance:
+            self.state = ['attack', 0, 0]
+
+        # Анимация врага
+        self.state[2] += tick
+        if self.state[0] == 'normal':
+            self.state[2] = 0
+        elif self.state[0] == 'attack':
+            frame_duration = (
+                self.states_duration['attack'] / len(self.images['attack'])
+            )
+            while self.state[2] > frame_duration:
+                self.state[2] -= frame_duration
+                self.state[1] += 1
+
+            if self.state[1] >= len(self.images['attack']) / 2:
+                self.atack(player, 1)
+
+            if self.state[1] >= len(self.images['attack']):
+                self.state = ['normal', 0, 0]
+
+        self.sprite_image = self.images[self.state[0]][self.state[1]]
+
+        self.update_perspective(player)
+
+        if all([
+            i in kwargs
+            for i in ['shot', 'weapon_bullet', 'bullet_max_distance']
+        ]) and kwargs['shot']:
+            self.get_shot(
+                player,
+                kwargs['weapon_bullet'],
+                kwargs['bullet_max_distance']
+            )
+            if self.health <= 0:
+                world.sprite_group.remove(self)
+
+        if self.get_distance(player) <= self.visibility_distance:
+            if self.check_direct_visibility(world, player):
+                self.move_direct(world, tick, player.x, player.y)
+            else:
+                self.move_dfs(world, tick, player.x, player.y)
 
 
 class WorldObject:
@@ -424,7 +505,8 @@ class Weapon:
     def __init__(self, bullet, normal, aimed_normal, shot_animation,
                  aiming_animation, aimed_shot_animation, shot_sound,
                  shot_duration=0.5, aiming_duration=0.3):
-        # self.animations = {
+        # Структура self.animations:
+        # {
         #   'название_анимации': [
         #       массив_кадров_анимации,
         #       длительность_показа_1_кадра
