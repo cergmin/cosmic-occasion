@@ -249,7 +249,7 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode(size)
 
     # Инициализация ресурсов
-    max_resources_amount = 77
+    max_resources_amount = 81
     rc = ResourceController()
 
     kill_event = Event()
@@ -458,7 +458,7 @@ if __name__ == '__main__':
                     health=100,
                     damage=10,
                     speed=50,
-                    visual_range=300,
+                    visibility_distance=300,
                     collider_width='93%',
                     collider_offset='5%'
                 )
