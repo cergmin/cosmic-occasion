@@ -271,7 +271,7 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode(size)
 
     # Инициализация ресурсов
-    max_resources_amount = 101
+    max_resources_amount = 104
     rc = ResourceController()
 
     kill_event = Event()
