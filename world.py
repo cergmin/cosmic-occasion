@@ -57,10 +57,10 @@ class World:
                 border_color = None
 
                 if self.map[i][j] in ['w', 'W']:
-                    color = (255, 255, 255)
+                    color = (138, 138, 138)
                 elif self.map[i][j] == '.':
-                    color = (197, 193, 186)
-                    border_color = (150, 150, 150)
+                    color = (53, 53, 53)
+                    border_color = (20, 20, 20)
 
                 draw.rect(
                     self.map_surface,

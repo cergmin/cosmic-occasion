@@ -570,7 +570,7 @@ class Drawing:
         # Фон всей карты
         pygame.draw.rect(
             self.screen,
-            (255, 255, 255),
+            (138, 138, 138),
             (
                 0,
                 HEIGHT - map_size[1],
@@ -635,7 +635,7 @@ class Drawing:
                 continue
 
             for radius, color in [
-                (10, (255, 255, 255)),
+                (10, (20, 20, 20)),
                 (8, (245, 52, 50)),
                 (3, (255, 255, 255))
             ]:
@@ -658,25 +658,25 @@ class Drawing:
         # Стерлка взгляда игрока для маркера
         arrow_points = []
         for radius, deg in [
-            (10, player.vx - 45),
+            (10, player.vx - 30),
             (17, player.vx),
-            (10, player.vx + 45)
+            (10, player.vx + 30)
         ]:
             arrow_points.append((
                 map_size[0] / 2 + radius * cos(radians(deg)),
-                HEIGHT - map_size[0] / 2  + radius * sin(radians(deg))
+                HEIGHT - map_size[1] / 2  + radius * sin(radians(deg))
             ))
 
         pygame.draw.polygon(
             self.screen,
-            (200, 10, 10),
+            (255, 255, 255),
             arrow_points
         )
         
         # Маркер игрока
         pygame.draw.circle(
             self.screen,
-            (150, 150, 150),
+            (20, 20, 20),
             (
                 map_size[0] / 2,
                 HEIGHT - map_size[0] / 2
@@ -692,23 +692,34 @@ class Drawing:
             ),
             10
         )
-        font = pygame.font.SysFont('Arial', 16, bold=True)
-        text = font.render(
-            'Я',
-            True,
-            (200, 10, 10)
-        )
-        self.screen.blit(
-            text,
+        pygame.draw.circle(
+            self.screen,
+            (30, 30, 230),
             (
-                (map_size[0] - text.get_rect().size[0]) / 2,
-                HEIGHT - (map_size[0] + text.get_rect().size[1]) / 2
-            )
+                map_size[0] / 2,
+                HEIGHT - map_size[0] / 2
+            ),
+            6
         )
+
     
     def health_bar(self, player):
         self.rc.get('health_bar').set_value(player.health)
         self.rc.get('health_bar').draw(self.screen)
+    
+    def score_card(self, score):
+        self.screen.blit(
+            self.rc.get('score_card'),
+            (10, 10)
+        )
+
+        Text(
+            self.rc,
+            10, 10, 175, 40,
+            text=str(score),
+            text_color=(255, 255, 255),
+            font=self.rc.get('font_Jura_22')
+        ).draw(self.screen)
 
     def background(self, player):
         # Попытка сделать паралакс,
@@ -879,7 +890,7 @@ class Drawing:
                     )
                 )
 
-    def menu(self, menu_screen='main'):
+    def menu(self, menu_screen='main', **kwargs):
         action = ''
         menu_running = True
         clock = pygame.time.Clock()
@@ -973,7 +984,7 @@ class Drawing:
                 Text(
                     self.rc,
                     0, WIDTH // 7 + WIDTH // 17, WIDTH, 36,
-                    text='Ваш счёт: 100',
+                    text='Ваш счёт: ' + str(kwargs['score']),
                     text_color=(255, 255, 255),
                     font=self.rc.get('font_Jura_36')
                 ).draw(self.screen)

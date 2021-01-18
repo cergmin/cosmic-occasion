@@ -185,6 +185,12 @@ def loading_resources(kill_event):
         )
     
     rc.load(
+        'score_card',
+        'images/score_card.png',
+        alpha=True
+    )
+    
+    rc.load(
         'world_sky',
         'images/sky.jpg',
         max_height=(HEIGHT // 2)
@@ -366,8 +372,6 @@ if __name__ == '__main__':
         wwwwwwwwwwwwwwwwwwwww
     ''')
 
-    max_enemies_amount = 15
-
     gun = Weapon(
         WeaponBullet(90),
         ['gun'], ['aimed_gun'],
@@ -381,7 +385,8 @@ if __name__ == '__main__':
 
     draw = Drawing(screen, rc)
     clock = pygame.time.Clock()
-
+    
+    score = 0
     is_aiming = False
     menu_opened = True
     running = True
@@ -425,7 +430,7 @@ if __name__ == '__main__':
                     power_used = gun.bullet.get_max_power() - \
                                  gun.bullet.get_power()
 
-                    # print(power_used)
+                    score += power_used / 100
 
                 elif event.button == 3:
                     is_aiming = not is_aiming
@@ -450,6 +455,9 @@ if __name__ == '__main__':
             player.move(world, 90, player.speed * tick)
         if keys[pygame.K_ESCAPE]:
             menu_opened = True
+
+        # Растущая от score сложность (в виде увеличения количества врагов)
+        max_enemies_amount = 20 + int(score * (score + 3) / (score + 2))
 
         # Поддержание количества врагов на определённом значении
         for i in range(max_enemies_amount - len(world.sprite_group)):
@@ -526,6 +534,7 @@ if __name__ == '__main__':
             draw.aim()
             draw.minimap(world, player)
             draw.health_bar(player)
+            draw.score_card(int(score))
 
             gun.update(tick)
             draw.weapon(gun)
@@ -537,7 +546,7 @@ if __name__ == '__main__':
                 rc.get('game_music').stop()
                 rc.get('menu_music').stop()
                 pygame.mouse.set_pos(WIDTH // 2, HEIGHT // 2)
-                draw.menu(menu_screen='death')
+                draw.menu(menu_screen='death', score=int(score))
 
                 # Обнуление игры
                 player.health = player.max_health
