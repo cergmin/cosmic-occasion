@@ -224,14 +224,15 @@ class WorldSprite(sprite.Sprite):
 
 class Enemy(WorldSprite):
     def __init__(self, sprite_x, sprite_y, sprite_height, image, rc,
-                 health=100, damage=10, speed=100, visual_range=200,
-                 collider_width=None, collider_offset=0):
+                 health=100, damage=5, speed=100, visibility_distance=200,
+                 collider_width=None, collider_offset=0, atack_distance=40):
         super().__init__(sprite_x, sprite_y, sprite_height, image, rc)
         
         self.health = max(0, health)
         self.damage = damage
         self.speed = speed
-        self.visual_range = visual_range
+        self.visibility_distance = visibility_distance
+        self.atack_distance = atack_distance
 
         if collider_width is None:
             self.collider_width = self.rect.size[0]
@@ -302,8 +303,8 @@ class Enemy(WorldSprite):
                 max_power_used=self.health
             )
 
-    def atack(self, player):
-        pass
+    def atack(self, player, tick):
+        player.hit(self.damage * tick)
 
     def move_dfs(self, world, tick, x, y):
         '''Движение по построенному маршруту от врага до игрока
@@ -383,11 +384,14 @@ class Enemy(WorldSprite):
             if self.health <= 0:
                 world.sprite_group.remove(self)
 
-        if self.get_distance(player) <= self.visual_range:
+        if self.get_distance(player) <= self.visibility_distance:
             if self.check_direct_visibility(world, player):
                 self.move_direct(world, tick, player.x, player.y)
             else:
                 self.move_dfs(world, tick, player.x, player.y)
+        
+        if self.get_distance(player) <= self.atack_distance:
+            self.atack(player, tick)
 
 
 class WorldObject:

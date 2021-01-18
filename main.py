@@ -129,6 +129,38 @@ def loading_resources(kill_event):
                 align='left'
             )
         )
+    
+    rc.load(
+        'health_bar_full',
+        'images/health_bar/full.png',
+        alpha=True
+    )
+    rc.load(
+        'health_bar_empty',
+        'images/health_bar/empty.png',
+        alpha=True
+    )
+    rc.load(
+        'health_bar_pointer',
+        'images/health_bar/pointer.png',
+        alpha=True
+    )
+    
+    rc.load(
+        'health_bar',
+        Bar(
+            rc,
+            -9,
+            HEIGHT - 220,
+            218,
+            40,
+            'health_bar_full',
+            'health_bar_empty',
+            'health_bar_pointer',
+            min_value=0,
+            max_value=PLAYER_MAX_HEALTH
+        )
+    )
 
     for folder in ['normal', 'hover', 'clicked']:
         for img in ['start', 'between', 'middle', 'end']:
@@ -303,7 +335,7 @@ if __name__ == '__main__':
 
         pygame.display.flip()
 
-    player = Player(100, 330)
+    player = Player(100, 330, health=PLAYER_MAX_HEALTH)
     world = World('''
         wwwwwwwwwwwwwwwwwwwww
         w.w.............w...w
@@ -318,7 +350,7 @@ if __name__ == '__main__':
         wwwwwwwwwwwwwwwwwwwww
     ''')
 
-    max_enemies_amount = 20
+    max_enemies_amount = 50
 
     gun = Weapon(
         WeaponBullet(90),
@@ -466,6 +498,7 @@ if __name__ == '__main__':
             draw.fps(clock)
             draw.aim()
             draw.minimap(world, player)
+            draw.health_bar(player)
 
             gun.update(tick)
             draw.weapon(gun)

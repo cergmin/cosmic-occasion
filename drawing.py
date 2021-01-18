@@ -411,6 +411,125 @@ class Slider(ElementUI):
         )
 
 
+class Bar(ElementUI):
+    def __init__(self, rc, x, y, width, height,
+                 img_full, img_empty, img_pointer,
+                 current_value=None, min_value=0,
+                 max_value=100):
+        super().__init__(rc, x, y, width, height)
+
+        self.img = {
+            'full': img_full,
+            'empty': img_empty,
+            'pointer': img_pointer
+        }
+        
+        self.min_value = min(min_value, max_value)
+        self.max_value = max(self.min_value, max_value)
+
+        if current_value is None:
+            self.value = self.min_value
+        else:
+            self.value = max(
+                min_value,
+                min(
+                    max_value,
+                    current_value
+                )
+            )
+        
+        self.state = 'bar'
+
+    def set_state(self, state):
+        pass
+    
+    def get_state(self):
+        return self.state
+
+    def set_value(self, value, min_limit=False, max_limit=False):
+        if min_limit and value < self.min_value:
+            value = self.min_value
+        
+        if max_limit and value > self.max_value:
+            value = self.max_value
+
+        self.value = value
+    
+    def get_value(self):
+        return self.value
+    
+    def set_percentage(self, percentage, min_limit=False, max_limit=False):
+        value = (
+            self.max_value - self.min_value
+        ) * percentage + self.min_value
+
+        self.set_value(value, min_limit, max_limit)
+    
+    def get_percentage(self):
+        return (
+            self.value - self.min_value
+        ) / (
+            self.max_value - self.min_value
+        )
+
+    def draw(self, surface):
+        empty_bar = pygame.transform.scale(
+            self.rc.get(self.img['empty']),
+            (
+                self.width,
+                self.height
+            )
+        )
+        surface.blit(
+            empty_bar,
+            (
+                self.x,
+                self.y
+            )
+        )
+
+        full_bar = pygame.transform.scale(
+            self.rc.get(self.img['full']),
+            (
+                self.width,
+                self.height
+            )
+        )
+        full_bar = full_bar.subsurface((
+            0,
+            0,
+            self.width * self.get_percentage(),
+            self.height
+        ))
+        surface.blit(
+            full_bar,
+            (
+                self.x,
+                self.y
+            )
+        )
+
+        pointer = pygame.transform.scale(
+            self.rc.get(self.img['pointer']),
+            (
+                int(
+                    self.height *
+                    self.rc.get(self.img['pointer']).get_rect().size[0] /
+                    self.rc.get(self.img['pointer']).get_rect().size[1]
+                ),
+                self.height
+            )
+        )
+        surface.blit(
+            pointer,
+            (
+                self.x + self.width * self.get_percentage() - \
+                    pointer.get_rect().size[0] / 1.75,
+                self.y
+            )
+        )
+
+
 class Drawing:
     def __init__(self, screen, rc):
         self.screen = screen
@@ -586,6 +705,10 @@ class Drawing:
                 HEIGHT - (map_size[0] + text.get_rect().size[1]) / 2
             )
         )
+    
+    def health_bar(self, player):
+        self.rc.get('health_bar').set_value(player.health)
+        self.rc.get('health_bar').draw(self.screen)
 
     def background(self, player):
         # Попытка сделать паралакс,

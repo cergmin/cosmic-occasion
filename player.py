@@ -4,11 +4,19 @@ from ray import ray_cast
 
 
 class Player:
-    def __init__(self, x, y, vx=0, speed=100):
+    def __init__(self, x, y, vx=0, speed=100, health=100):
         self.x = x
         self.y = y
         self.vx = vx
         self.speed = speed
+        self.health = health
+        self.max_health = health
+    
+    def hit(self, health):
+        '''Ударить игрока и снять определённое количество единиц здоровья'''
+
+        self.health -= health
+        self.health = max(0, self.health)
     
     def move(self, world, angle, distance, stop_distance=10):
         '''Передвижение игрока на distance в сторону angle,
