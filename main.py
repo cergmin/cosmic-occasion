@@ -13,6 +13,11 @@ from drawing import *
 
 
 def loading_resources(kill_event):
+    rc.load('setting_music_volume', DEFAULT_MUSIC_VOLUME)
+    rc.load('setting_sound_volume', DEFAULT_SOUND_VOLUME)
+    rc.load('setting_ray_amount', RAYS_AMOUNT)
+    rc.load('setting_mouse_sensetivity', SENSITIVITY)
+
     rc.load('game_music', 'sounds/game.mp3')
     rc.load('menu_music', 'sounds/menu.mp3')
     rc.load('gun_sound', 'sounds/gun.mp3')
@@ -82,11 +87,12 @@ def loading_resources(kill_event):
 
 
     for i, (key, subtitle, min_value, max_value, cur_value) in enumerate([
-        ('music_volume', 'Громкость музыки', 0, 100, 100),
-        ('sound_volume', 'Громкость звуков', 0, 100, 100),
+        ('mouse_sensetivity', 'Чувствительность мыши', 1, 100, SENSITIVITY),
+        ('music_volume', 'Громкость музыки', 0, 100, DEFAULT_MUSIC_VOLUME),
+        ('sound_volume', 'Громкость звуков', 0, 100, DEFAULT_SOUND_VOLUME),
         ('rays_amount', 'Количество лучей', 30, 600, 100)
     ]):
-        block_margin = 100
+        block_margin = 90
         block_width = 420
         slider_margin = 50
         slider_width = 345
@@ -95,7 +101,7 @@ def loading_resources(kill_event):
             Text(
                 rc,
                 (WIDTH - block_width) // 2,
-                WIDTH // 7 + i * block_margin,
+                WIDTH // 9 + i * block_margin,
                 block_width,
                 50,
                 text=subtitle,
@@ -108,7 +114,7 @@ def loading_resources(kill_event):
             Slider(
                 rc,
                 (WIDTH - block_width) // 2,
-                WIDTH // 7 + slider_margin + i * block_margin,
+                WIDTH // 9 + slider_margin + i * block_margin,
                 slider_width,
                 35,
                 'slider_start',
@@ -126,7 +132,7 @@ def loading_resources(kill_event):
             Text(
                 rc,
                 (WIDTH - block_width) // 2 + slider_width + 5,
-                WIDTH // 7 + slider_margin + i * block_margin,
+                WIDTH // 9 + slider_margin + i * block_margin,
                 block_width - slider_width - 5,
                 35,
                 text='0',
@@ -401,10 +407,10 @@ if __name__ == '__main__':
                 # Если mouse.get_visible() = False и event.set_grab(True),
                 # то метод mouse.set_pos(...) не работает
                 if pygame.mouse.get_visible():
-                    player.vx += (event.pos[0] - WIDTH // 2) * (1 / SENSITIVITY)
+                    player.vx += (event.pos[0] - WIDTH // 2) * (rc.get('setting_mouse_sensetivity') / 100)
                     pygame.mouse.set_pos(WIDTH // 2, HEIGHT // 2)
                 else:
-                    player.vx += event.rel[0] * (1 / SENSITIVITY)
+                    player.vx += event.rel[0] * (rc.get('setting_mouse_sensetivity') / 100)
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
@@ -438,11 +444,19 @@ if __name__ == '__main__':
                     if is_aiming:
                         gun.set_state('aiming')
                         player.speed /= 2.5
-                        SENSITIVITY *= 2.5
+                        rc.load(
+                            'setting_mouse_sensetivity',
+                            rc.get('setting_mouse_sensetivity') / 2.5,
+                            rewrite=True
+                        )
                     else:
                         gun.set_state('reversed_aiming')
                         player.speed *= 2.5
-                        SENSITIVITY /= 2.5
+                        rc.load(
+                            'setting_mouse_sensetivity',
+                            rc.get('setting_mouse_sensetivity') * 2.5,
+                            rewrite=True
+                        )
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:

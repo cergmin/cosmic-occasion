@@ -776,8 +776,10 @@ class Drawing:
                 sprite
             ])
 
-        for i in range(RAYS_AMOUNT):
-            ray_angle_x = player.vx + i * OFFSET_ANGLE - FOV / 2
+        for i in range(self.rc.get('setting_ray_amount')):
+            ray_angle_x = player.vx + i * (
+                FOV / self.rc.get('setting_ray_amount')
+            ) - FOV / 2
             depth, ray_offset, obj_info = ray_cast(
                 world,
                 player.x,
@@ -823,9 +825,9 @@ class Drawing:
                     self.screen,
                     pixel_color,
                     (
-                        i * WIDTH // RAYS_AMOUNT - 1,
+                        i * WIDTH // self.rc.get('setting_ray_amount') - 1,
                         (HEIGHT - wall_height) // 2,
-                        WIDTH // RAYS_AMOUNT + 1,
+                        WIDTH // self.rc.get('setting_ray_amount') + 1,
                         wall_height
                     )
                 )
@@ -876,7 +878,7 @@ class Drawing:
                 wall_column = pygame.transform.scale(
                     wall_column,
                     (
-                        WIDTH // RAYS_AMOUNT + 1,
+                        WIDTH // self.rc.get('setting_ray_amount') + 1,
                         int(wall_height)
                     )
                 )
@@ -885,7 +887,7 @@ class Drawing:
                 self.screen.blit(
                     wall_column,
                     (
-                        i * (WIDTH // RAYS_AMOUNT + 1),
+                        i * (WIDTH // self.rc.get('setting_ray_amount') + 1),
                         (HEIGHT - wall_height) // 2
                     )
                 )
@@ -934,7 +936,7 @@ class Drawing:
                     btn.draw(self.screen)
             elif menu_screen == 'settings':
                 for slider_key in [
-                    'music_volume', 'sound_volume', 'rays_amount'
+                    'music_volume', 'sound_volume', 'rays_amount', 'mouse_sensetivity'
                 ]:
                     self.rc.get(slider_key + '_slider').update_state(
                         pygame.mouse
@@ -954,6 +956,10 @@ class Drawing:
                     self.rc.get(slider_key + '_slider').draw(self.screen)
                     self.rc.get(slider_key + '_label').draw(self.screen)
 
+                mouse_sensetivity = self.rc.get(
+                    'mouse_sensetivity_slider'
+                ).get_value()
+
                 music_volume = self.rc.get(
                     'music_volume_slider'
                 ).get_value() / 100
@@ -961,11 +967,22 @@ class Drawing:
                 sound_volume = self.rc.get(
                     'sound_volume_slider'
                 ).get_value() / 100
+                
+                rays_amount = int(
+                    self.rc.get(
+                        'rays_amount_slider'
+                    ).get_value()
+                )
 
                 self.rc.get('game_music').set_volume(music_volume)
                 self.rc.get('menu_music').set_volume(music_volume)
                 self.rc.get('gun_sound').set_volume(sound_volume)
                 self.rc.get('hit_sound').set_volume(sound_volume)
+                
+                self.rc.load('setting_mouse_sensetivity', mouse_sensetivity, rewrite=True)
+                self.rc.load('setting_music_volume', music_volume, rewrite=True)
+                self.rc.load('setting_sound_volume', sound_volume, rewrite=True)
+                self.rc.load('setting_ray_amount', rays_amount, rewrite=True)
 
                 back_button.update_state(pygame.mouse)
                 back_button.draw(self.screen)
