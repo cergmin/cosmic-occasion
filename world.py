@@ -8,16 +8,29 @@ from settings import *
 
 class World:
     def __init__(self, map):
+        # self.map хранит двухмерную матрицу (точнее, список строк) карты
         self.map = list(
             filter(
                 lambda x: len(x) > 0,
                 map.replace(' ', '').split('\n')
             )
         )
+
+        # Список объектов на карте, привязанных к сетке.
+        # Его можно получить по ключу (x, y),
+        # где x, y - координаты на сетке.
+        # P.S. Используется словарь,
+        # т.к. поиск по ключу осуществляется за O(1)
         self.objects = dict()
+
+        # Группа всех спрайтов
         self.sprite_group = sprite.Group()
+
+        # self.route_hash хранит маршруты, которые уже прокладывались ранее,
+        # чтобы не тратить время на повторное проложение.
         self.route_hash = dict()
 
+        # Чтение карты self.map и добавление объектов в self.objects
         for i, row in enumerate(self.map):
             for j, obj_char in enumerate(row):
                 if obj_char == 'W':
@@ -43,13 +56,15 @@ class World:
                     assert ValueError(
                         f"Object '{obj_char}' is undefined"
                     )
-        
+
+        # self.map_surface хранит изображение карты
         self.map_surface = Surface((
             len(self.map[0]) * 100,
             len(self.map) * 100
         ))
         self.draw_map()
-    
+
+    # Создание изображения карты
     def draw_map(self):
         for i in range(len(self.map)):
             for j in range(len(self.map[i])):
@@ -73,6 +88,8 @@ class World:
                     )
                 )
 
+                # Рисование обводки у клеток только там,
+                # где это необходимо
                 for di, dj, dx1, dy1, dx2, dy2, condition in [
                     (-1, 0, 0, 0, 1, 0, i < len(self.map) - 1),
                     (0, -1, 0, 0, 0, 1, j < len(self.map[0]) - 1),
@@ -95,10 +112,12 @@ class World:
                             ),
                             5
                         )
-    
+
+    # Добавление спрайта на карту
     def add_sprite(self, sprite):
         self.sprite_group.add(sprite)
-    
+
+    # Обновление всех спрайтов в "мире"
     def update_sprites(self, player, tick, *args, **kwargs):
         self.sprite_group.update(self, player, tick, *args, **kwargs)
 
@@ -134,7 +153,7 @@ class World:
             if (GRID_SIZE * i, GRID_SIZE * j) in self.objects or not \
                (0 <= j < len(self.map) and 0 <= i < len(self.map[j])):
                 continue
-            
+
             route = self.get_route(i, j, x2, y2, visited_cells)
             visited_cells[i, j] = False
 
@@ -147,13 +166,14 @@ class World:
         self.route_hash[x1, y1, x2, y2] = best_route
         return best_route
 
+
 class WorldSprite(sprite.Sprite):
     def __init__(self, sprite_x, sprite_y, sprite_height, image, rc):
         super().__init__()
         self.rc = rc
         self.image = rc.get(image)
         self.rect = self.image.get_rect()
-        
+
         self.sprite_image = image
         self.sprite_x = sprite_x
         self.sprite_y = sprite_y
@@ -162,17 +182,17 @@ class WorldSprite(sprite.Sprite):
 
         self.rect.x = 0
         self.rect.y = (HEIGHT - self.rect.size[1]) / 2
-        
+
         self.scale_k = 1  # Коэффициент растяжения спрайта
         self.set_scale(1)
-    
+
     def draw(self, screen):
         '''Собственная функция рисования,
            чтобы можно было рисовать спрайты по отдельности'''
 
         if WIDTH > self.rect.x > -self.rect.size[0]:
             screen.blit(self.image, self.rect)
-    
+
     def get_distance(self, player):
         '''Получение расстояние до игрока'''
 
@@ -180,7 +200,7 @@ class WorldSprite(sprite.Sprite):
             (self.sprite_x - player.x) ** 2 +
             (self.sprite_y - player.y) ** 2
         ) ** 0.5
-    
+
     def set_scale(self, scale):
         self.scale_k = scale
 
@@ -195,7 +215,7 @@ class WorldSprite(sprite.Sprite):
         )
 
         self.rect.y = (HEIGHT - self.rect.size[1]) / 2
-    
+
     def update_perspective(self, player):
         '''Изменение проекции врага на экран,
            с учётом положения игрока и поворота его взгляда'''
@@ -227,7 +247,7 @@ class Enemy(WorldSprite):
                  health=100, damage=10, speed=100, visibility_distance=200,
                  collider_width=None, collider_offset=0, atack_distance=40):
         super().__init__(sprite_x, sprite_y, sprite_height, image, rc)
-        
+
         self.health = max(0, health)
         self.damage = damage
         self.speed = speed
@@ -237,7 +257,7 @@ class Enemy(WorldSprite):
         if collider_width is None:
             self.collider_width = self.rect.size[0]
         elif type(collider_width) == str and \
-             collider_width[-1] == '%':
+                collider_width[-1] == '%':
             self.collider_width = self.rect.size[0] * \
                                   float(collider_width[:-1]) / 100
         else:
@@ -249,7 +269,7 @@ class Enemy(WorldSprite):
                                    float(collider_offset[:-1]) / 100
         else:
             self.collider_offset = int(collider_offset)
-    
+
     def check_direct_visibility(self, world, player):
         '''Проверка возможности прямой видимости игрока врагом,
            т.е. проверка отсутсвия стен между врагом и игроком'''
@@ -273,11 +293,10 @@ class Enemy(WorldSprite):
 
         return distance_to_first_object >= distance_to_player
 
-
     def get_shot(self, player, weapon_bullet, bullet_max_distance):
         '''Определение того, насколько точно попали во врага
            и убавление уровня здоровья'''
-        
+
         if bullet_max_distance <= self.get_distance(player):
             return
 
@@ -293,7 +312,7 @@ class Enemy(WorldSprite):
 
         collider_width = self.collider_width * self.scale_k
         delta_pixel = delta_angle * (WIDTH / FOV) - \
-                      self.collider_offset * self.scale_k
+            self.collider_offset * self.scale_k
 
         if 0 <= delta_pixel <= collider_width:
             self.health -= weapon_bullet.take_power(
@@ -309,7 +328,7 @@ class Enemy(WorldSprite):
     def move_dfs(self, world, tick, x, y):
         '''Движение по построенному маршруту от врага до игрока
            с обхождением препятствий'''
-    
+
         route = world.get_route(
             int(self.sprite_x // GRID_SIZE),
             int(self.sprite_y // GRID_SIZE),
@@ -324,7 +343,7 @@ class Enemy(WorldSprite):
             route[1][0] * GRID_SIZE + GRID_SIZE / 2,
             route[1][1] * GRID_SIZE + GRID_SIZE / 2,
         )
-        
+
         # Метод прямого перемещения используется,
         # чтобы присутствовала коллизия с объектами
         self.move_direct(world, tick, *next_position)
@@ -342,7 +361,7 @@ class Enemy(WorldSprite):
 
         if dist_to_player < stop_distance:
             distance = 0
-        
+
         move_direction = atan2(
             y - self.sprite_y,
             x - self.sprite_x
@@ -363,13 +382,13 @@ class Enemy(WorldSprite):
             (180 if 90 <= degrees(move_direction) <= 270 else 0),
             max_depth=(distance + 1)
         )[0]
-        
+
         if ray_distance_x > (stop_distance + distance):
             self.sprite_x += distance * cos(move_direction)
         else:
             self.sprite_x += (ray_distance_x - stop_distance) * \
                              cos(move_direction)
-        
+
         if ray_distance_y > (stop_distance + distance):
             self.sprite_y += distance * sin(move_direction)
         else:
@@ -396,16 +415,16 @@ class Enemy(WorldSprite):
                 self.move_direct(world, tick, player.x, player.y)
             else:
                 self.move_dfs(world, tick, player.x, player.y)
-        
+
         if self.get_distance(player) <= self.atack_distance:
             self.atack(player, tick)
 
 
 class AnimatedEnemy(Enemy):
-    def __init__(self, sprite_x, sprite_y, sprite_height, images, 
+    def __init__(self, sprite_x, sprite_y, sprite_height, images,
                  attack_sound, rc, health=100, damage=10, speed=100,
-                 visibility_distance=200, collider_width=None, 
-                 collider_offset=0, atack_distance=40, 
+                 visibility_distance=200, collider_width=None,
+                 collider_offset=0, atack_distance=40,
                  states_duration={'normal': 0, 'attack': 0.5}):
         super().__init__(
             sprite_x, sprite_y, sprite_height, images['normal'][0],
@@ -429,8 +448,8 @@ class AnimatedEnemy(Enemy):
             'normal',
             'attack'
         ]
-        self.state = ['normal', 0, 0] # [название, кадр, время]
-    
+        self.state = ['normal', 0, 0]  # [название, кадр, время]
+
     def update(self, world, player, tick, *args, **kwargs):
         # Запуск атаки, если игрок достаточно близко
         if self.state[0] == 'normal' and \
@@ -516,7 +535,7 @@ class Weapon:
         #       длительность_показа_1_кадра
         #   ]
         # }
-        # 
+        #
         # Кадры представленны в виде массива названий картинок,
         # которые хранятся в ImageController.
         # Длительность показа измеряется в секундах.
@@ -542,7 +561,7 @@ class Weapon:
 
         self.timer = 0
         self.state = ['normal', 0]
-    
+
     def get_bullet(self):
         return self.bullet
 
@@ -606,16 +625,16 @@ class WeaponBullet:
     def __init__(self, max_power):
         self.max_power = max_power
         self.power = max_power
-    
+
     def recover(self):
         self.power = self.max_power
-    
+
     def get_max_power(self):
         return self.max_power
-    
+
     def get_power(self):
         return self.power
-    
+
     def take_power(self, percentage=1, max_power_used=None):
         '''Забрать и получить часть оставшейся энергии пули'''
 

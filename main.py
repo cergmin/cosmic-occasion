@@ -13,17 +13,24 @@ from drawing import *
 
 
 def loading_resources(kill_event):
+    # Функция загрузки различных ресурсов игры.
+    # Выполняется в отдельном потоке, чтобы не
+    # блокировать выполнение цикла отрисовки.
+
+    # Значения настроек игры
     rc.load('setting_music_volume', DEFAULT_MUSIC_VOLUME)
     rc.load('setting_sound_volume', DEFAULT_SOUND_VOLUME)
     rc.load('setting_ray_amount', RAYS_AMOUNT)
     rc.load('setting_mouse_sensetivity', SENSITIVITY)
 
+    # Аудиофайлы игры
     rc.load('game_music', 'sounds/game.mp3')
     rc.load('menu_music', 'sounds/menu.mp3')
     rc.load('gun_sound', 'sounds/gun.mp3')
     rc.load('hit_sound', 'sounds/hit.mp3')
     rc.load('button_sound', 'sounds/button_pressed.mp3')
 
+    # Шрифты игры
     rc.load(
         'font_guardianlai_w/14',
         pygame.font.Font('font/guardianlai.ttf', WIDTH // 14)
@@ -45,6 +52,7 @@ def loading_resources(kill_event):
         pygame.font.Font('font/Jura.ttf', 36)
     )
 
+    # Объект заголовка
     rc.load(
         'title_text',
         Text(
@@ -56,9 +64,16 @@ def loading_resources(kill_event):
         )
     )
 
+    # Список изображений различных состояний и частей кнопки
     button_resources = []
     for folder in ['normal', 'hover', 'clicked']:
         for img in ['start', 'between', 'middle', 'end']:
+            rc.load(
+                'btn_' + folder + '_' + img,
+                'images/button/' + folder + '/' + img + '.png',
+                alpha=True,
+                max_height=100
+            )
             button_resources.append('btn_' + folder + '_' + img)
 
     button_text_attributes = {
@@ -68,6 +83,7 @@ def loading_resources(kill_event):
         'font': rc.get('font_RussoOne_40')
     }
 
+    # Кнопки меню
     for i, (button_key, button_text) in enumerate([
         ('start_button', 'НАЧАТЬ'),
         ('settings_button', 'НАСТРОЙКИ'),
@@ -85,7 +101,16 @@ def loading_resources(kill_event):
             )
         )
 
+    # Изображения различных частей ползунков
+    for img in ['start', 'start_between', 'end_between', 'end', 'pointer']:
+        rc.load(
+            'slider_' + img,
+            'images/slider/' + img + '.png',
+            alpha=True,
+            max_height=100
+        )
 
+    # Ползунки, контролирующие различные настройки и подписи к ним
     for i, (key, subtitle, min_value, max_value, cur_value) in enumerate([
         ('mouse_sensetivity', 'Чувствительность мыши', 1, 100, SENSITIVITY),
         ('music_volume', 'Громкость музыки', 0, 100, DEFAULT_MUSIC_VOLUME),
@@ -140,7 +165,8 @@ def loading_resources(kill_event):
                 align='left'
             )
         )
-    
+
+    # Изображения различных частей полосы здоровья
     rc.load(
         'health_bar_full',
         'images/health_bar/full.png',
@@ -156,15 +182,16 @@ def loading_resources(kill_event):
         'images/health_bar/pointer.png',
         alpha=True
     )
-    
+
+    # Объект полосы здоровья
     rc.load(
         'health_bar',
         Bar(
             rc,
-            -9,
-            HEIGHT - 220,
-            218,
-            40,
+            WIDTH // 2 - 150,
+            0,
+            300,
+            60,
             'health_bar_full',
             'health_bar_empty',
             'health_bar_pointer',
@@ -173,35 +200,21 @@ def loading_resources(kill_event):
         )
     )
 
-    for folder in ['normal', 'hover', 'clicked']:
-        for img in ['start', 'between', 'middle', 'end']:
-            rc.load(
-                'btn_' + folder + '_' + img,
-                'images/button/' + folder + '/' + img + '.png',
-                alpha=True,
-                max_height=100
-            )
-
-    for img in ['start', 'start_between', 'end_between', 'end', 'pointer']:
-        rc.load(
-            'slider_' + img,
-            'images/slider/' + img + '.png',
-            alpha=True,
-            max_height=100
-        )
-    
+    # Фоновая картинка для игровых очков
     rc.load(
-        'score_card',
+        'score_card_background',
         'images/score_card.png',
         alpha=True
     )
-    
+
+    # Изображение фоновго неба
     rc.load(
         'world_sky',
         'images/sky.jpg',
         max_height=(HEIGHT // 2)
     )
 
+    # Изображение фона меню
     rc.load(
         'menu_background',
         'images/menu.jpg',
@@ -209,29 +222,34 @@ def loading_resources(kill_event):
         max_height=HEIGHT
     )
 
+    # Текстура стены
     rc.load(
         'wall',
         'images/wall.jpg'
     )
 
+    # Изображение прицела
     rc.load(
         'aim',
         'images/aim.png',
         alpha=True
     )
 
+    # Изображение оружия
     rc.load(
         'gun',
         'images/gun/shoot/0.png',
         alpha=True
     )
 
+    # Изображение оружия во время прицеливания
     rc.load(
         'aimed_gun',
         'images/gun/aim_shoot/0.png',
         alpha=True
     )
 
+    # Анимация стрельбы из оружия
     for i in range(1, 11):
         rc.load(
             'shot_' + str(i),
@@ -239,13 +257,7 @@ def loading_resources(kill_event):
             alpha=True
         )
 
-    for i in range(11):
-        rc.load(
-            'aiming_' + str(i),
-            f'images/gun/aim/{i}.png',
-            alpha=True
-        )
-
+    # Анимация стрельбы из прицеленого оружия
     for i in range(1, 11):
         rc.load(
             'aimed_shot_' + str(i),
@@ -253,19 +265,30 @@ def loading_resources(kill_event):
             alpha=True
         )
 
+    # Анимация прицеливания (перехода из одного состояние в другое)
+    for i in range(11):
+        rc.load(
+            'aiming_' + str(i),
+            f'images/gun/aim/{i}.png',
+            alpha=True
+        )
+
+    # Изображение врага
     rc.load(
         'enemy_biba_normal_0',
         f'images/enemies/biba/normal/0.png',
         alpha=True
     )
-    
+
+    # Анимация атаки врага
     for i in range(20):
         rc.load(
             'enemy_biba_attack_' + str(i),
             f'images/enemies/biba/attack/{i}.png',
             alpha=True
         )
-    
+
+    # Завершение потока, т.к. все необходимые ресурсы загружены
     kill_event.set()
 
 
@@ -277,7 +300,7 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode(size)
 
     # Инициализация ресурсов
-    max_resources_amount = 104
+    max_resources_amount = 111
     rc = ResourceController()
 
     kill_event = Event()
@@ -288,6 +311,9 @@ if __name__ == '__main__':
     loading_resources_thread.setDaemon(True)
     loading_resources_thread.start()
 
+    # Пока все необходимые ресурсы не загрузились
+    # (и не было вызвано событие kill_event),
+    # отображать шаклу загрузки.
     while not kill_event.is_set():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -337,6 +363,7 @@ if __name__ == '__main__':
             )
         )
 
+        # Очертания шкалы загрузки
         pygame.draw.rect(
             screen,
             (255, 255, 255),
@@ -348,6 +375,8 @@ if __name__ == '__main__':
             ),
             width=3
         )
+
+        # Шкала загрузки
         pygame.draw.rect(
             screen,
             (23, 147, 229),
@@ -391,14 +420,14 @@ if __name__ == '__main__':
 
     draw = Drawing(screen, rc)
     clock = pygame.time.Clock()
-    
+
     score = 0
     is_aiming = False
     menu_opened = True
     running = True
     while running:
         tick = clock.tick() / 1000
-        
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -407,22 +436,25 @@ if __name__ == '__main__':
                 # Если mouse.get_visible() = False и event.set_grab(True),
                 # то метод mouse.set_pos(...) не работает
                 if pygame.mouse.get_visible():
-                    player.vx += (event.pos[0] - WIDTH // 2) * (rc.get('setting_mouse_sensetivity') / 100)
+                    player.vx += (event.pos[0] - WIDTH // 2) * \
+                                 (rc.get('setting_mouse_sensetivity') / 100)
                     pygame.mouse.set_pos(WIDTH // 2, HEIGHT // 2)
                 else:
-                    player.vx += event.rel[0] * (rc.get('setting_mouse_sensetivity') / 100)
+                    player.vx += event.rel[0] * \
+                        (rc.get('setting_mouse_sensetivity') / 100)
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     rc.get(gun.sound).play()
 
+                    # Запустить анимацию выстрела
                     gun.set_state(
                         'aimed_shot' if is_aiming else 'shot'
                     )
 
                     gun.bullet.recover()
                     world.update_sprites(
-                        player, 0, 
+                        player, 0,
                         shot=True,
                         weapon_bullet=gun.get_bullet(),
                         bullet_max_distance=ray_cast(
@@ -433,16 +465,22 @@ if __name__ == '__main__':
                         )[0]
                     )
 
+                    # Общее количество нанесённого урона за 1 выстрел
                     power_used = gun.bullet.get_max_power() - \
-                                 gun.bullet.get_power()
+                        gun.bullet.get_power()
 
+                    # Увеличение счёта за нанесённый урон
                     score += power_used / 100
 
                 elif event.button == 3:
+                    # Изменение состояние прицеливания
                     is_aiming = not is_aiming
-                    
+
                     if is_aiming:
                         gun.set_state('aiming')
+
+                        # Изменение скорости и чувствительности
+                        # для лучшего прицеливания
                         player.speed /= 2.5
                         rc.load(
                             'setting_mouse_sensetivity',
@@ -451,6 +489,9 @@ if __name__ == '__main__':
                         )
                     else:
                         gun.set_state('reversed_aiming')
+
+                        # Возвращение скорости и чувствительности
+                        # к изначальному состоянию
                         player.speed *= 2.5
                         rc.load(
                             'setting_mouse_sensetivity',
@@ -475,10 +516,13 @@ if __name__ == '__main__':
 
         # Поддержание количества врагов на определённом значении
         for i in range(max_enemies_amount - len(world.sprite_group)):
+            # Выбор случайного места для появления врагов на карте,
+            # с учётом стен и того, что очень близко с игроком
+            # нельзя ставить врагов.
             while True:
                 y = randint(0, len(world.map) - 1)
                 x = randint(0, len(world.map[y]) - 1)
-    
+
                 if is_cell_empty(
                     x, y, world.map,
                     busy_cells=get_cells_around(
@@ -491,7 +535,8 @@ if __name__ == '__main__':
                     y *= GRID_SIZE
                     y += GRID_SIZE / 2
                     break
-            
+
+            # Добавление врага на карту
             world.add_sprite(
                 AnimatedEnemy(
                     x, y, 350,
@@ -542,6 +587,7 @@ if __name__ == '__main__':
         else:
             world.update_sprites(player, tick)
 
+            # Отрисовка уровня и элементов ui
             draw.background(player)
             draw.world(world, player)
             draw.fps(clock)
@@ -570,10 +616,11 @@ if __name__ == '__main__':
 
                 for sprite in world.sprite_group:
                     world.sprite_group.remove(sprite)
-                
-                
+
+                score = 0
+
                 # Открытие главного меню
                 menu_opened = True
-                
+
         pygame.display.flip()
     pygame.quit()

@@ -6,6 +6,7 @@ from controllers import ResourceController
 
 
 class ElementUI:
+    # Базовый класс всех ui элементов
     def __init__(self, rc, x, y, width, height):
         self.rc = rc
         self.x = x
@@ -22,7 +23,6 @@ class ElementUI:
         )
 
     def is_hover(self, cursor_x, cursor_y):
-
         return (self.x <= cursor_x <= self.x + self.width) and \
                (self.y <= cursor_y <= self.y + self.height)
 
@@ -39,7 +39,7 @@ class Text(ElementUI):
                  text_color=(255, 255, 255), font=None,
                  align=None):
         super().__init__(rc, x, y, width, height)
-        
+
         self.text = text
         self.text_color = text_color
 
@@ -58,10 +58,10 @@ class Text(ElementUI):
         else:
             # Выравнивание по умолчанию
             self.align = 'center'
-    
+
     def set_text(self, text):
         self.text = text
-    
+
     def draw(self, surface):
         text_surface = self.font.render(
             self.text,
@@ -140,7 +140,7 @@ class Button(ElementUI):
             'clicked-mouseup'
         ]
         self.state = self.states_list[0]
-    
+
     def update_state(self, mouse):
         if self.is_hover(*mouse.get_pos()):
             if pygame.mouse.get_pressed(3)[0]:
@@ -158,11 +158,12 @@ class Button(ElementUI):
             self.state = self.states_list[0]
         else:
             self.state = state
-    
+
     def get_state(self):
         return self.state
 
     def draw(self, surface):
+        # Определение ширины каждой части кнопки
         img_w = {}
 
         for i in filter(
@@ -172,7 +173,7 @@ class Button(ElementUI):
             img_w[i.split('_')[-1]] = max(
                 1,
                 round(
-                    self.rc.get(self.img[i]).get_size()[0] * \
+                    self.rc.get(self.img[i]).get_size()[0] *
                     (self.height / self.rc.get(self.img[i]).get_size()[1])
                 )
             )
@@ -186,7 +187,7 @@ class Button(ElementUI):
         ]
 
         img_amount[1][1] = self.width - \
-                           (img_amount[0][1] + img_amount[4][1])
+            (img_amount[0][1] + img_amount[4][1])
 
         if img_amount[1][1] >= img_w['middle']:
             img_amount[2][1] = img_w['middle']
@@ -246,7 +247,7 @@ class Slider(ElementUI):
             'end': img_end,
             'pointer': img_pointer
         }
-        
+
         self.min_value = min(min_value, max_value)
         self.max_value = max(self.min_value, max_value)
         self.value_step = value_step
@@ -262,13 +263,13 @@ class Slider(ElementUI):
                     current_value
                 )
             )
-        
+
         self.states_list = [
             'slider-mouseup',
             'slider-mousedown'
         ]
         self.state = self.states_list[0]
-    
+
     def update_state(self, mouse):
         if not mouse.get_pressed(3)[0]:
             self.set_state('slider-mouseup')
@@ -293,7 +294,7 @@ class Slider(ElementUI):
             self.state = self.states_list[0]
         else:
             self.state = state
-    
+
     def get_state(self):
         return self.state
 
@@ -304,15 +305,15 @@ class Slider(ElementUI):
 
         if min_limit and value < self.min_value:
             value = self.min_value
-        
+
         if max_limit and value > self.max_value:
             value = self.max_value
 
         self.value = value
-    
+
     def get_value(self):
         return self.value
-    
+
     def set_percentage(self, percentage, min_limit=False,
                        max_limit=False, step_limit=False):
         value = (
@@ -320,7 +321,7 @@ class Slider(ElementUI):
         ) * percentage + self.min_value
 
         self.set_value(value, min_limit, max_limit, step_limit)
-    
+
     def get_percentage(self):
         return (
             self.value - self.min_value
@@ -329,13 +330,14 @@ class Slider(ElementUI):
         )
 
     def draw(self, surface):
+        # Определение ширины каждой части слайдера
         img_w = {}
 
         for i in self.img:
             img_w[i] = max(
                 1,
                 round(
-                    self.rc.get(self.img[i]).get_size()[0] * \
+                    self.rc.get(self.img[i]).get_size()[0] *
                     (self.height / self.rc.get(self.img[i]).get_size()[1])
                 )
             )
@@ -360,7 +362,7 @@ class Slider(ElementUI):
         ]
 
         width_rest = self.width - (
-            img_amount[0][1] + 
+            img_amount[0][1] +
             img_amount[3][1]
         )
 
@@ -386,10 +388,10 @@ class Slider(ElementUI):
             )
 
             x_offset += i[1]
-        
+
         pointer_width = round(
             self.rc.get(self.img['pointer']).get_size()[0] * (
-                self.height / self.rc.get(self.img['pointer']).get_size()[1]  
+                self.height / self.rc.get(self.img['pointer']).get_size()[1]
             )
         )
         x_pointer_pos = self.x + (
@@ -423,7 +425,7 @@ class Bar(ElementUI):
             'empty': img_empty,
             'pointer': img_pointer
         }
-        
+
         self.min_value = min(min_value, max_value)
         self.max_value = max(self.min_value, max_value)
 
@@ -437,34 +439,34 @@ class Bar(ElementUI):
                     current_value
                 )
             )
-        
+
         self.state = 'bar'
 
     def set_state(self, state):
         pass
-    
+
     def get_state(self):
         return self.state
 
     def set_value(self, value, min_limit=False, max_limit=False):
         if min_limit and value < self.min_value:
             value = self.min_value
-        
+
         if max_limit and value > self.max_value:
             value = self.max_value
 
         self.value = value
-    
+
     def get_value(self):
         return self.value
-    
+
     def set_percentage(self, percentage, min_limit=False, max_limit=False):
         value = (
             self.max_value - self.min_value
         ) * percentage + self.min_value
 
         self.set_value(value, min_limit, max_limit)
-    
+
     def get_percentage(self):
         return (
             self.value - self.min_value
@@ -523,19 +525,21 @@ class Bar(ElementUI):
         surface.blit(
             pointer,
             (
-                self.x + self.width * self.get_percentage() - \
-                    pointer.get_rect().size[0] / 1.75,
+                self.x + self.width * self.get_percentage() -
+                pointer.get_rect().size[0] / 2,
                 self.y
             )
         )
 
 
 class Drawing:
+    # Класс, который содержит код для отрисовки каждой части игры
     def __init__(self, screen, rc):
         self.screen = screen
         self.rc = rc
-    
+
     def fps(self, clock):
+        # Счётчик количества кадров
         fps_amount = str(int(clock.get_fps()))
         font = pygame.font.SysFont('Arial', 36, bold=True)
         text = font.render(fps_amount, False, (255, 0, 0))
@@ -546,8 +550,9 @@ class Drawing:
                 0
             )
         )
-    
+
     def minimap(self, world, player):
+        # Миникарта в левом нижнем углу экрана
         map_scale = 30 / GRID_SIZE
         map_offset = (
             -200 * map_scale,
@@ -578,7 +583,7 @@ class Drawing:
                 map_size[1]
             )
         )
- 
+
         map_surface = pygame.transform.scale(
             world.map_surface,
             (
@@ -625,9 +630,9 @@ class Drawing:
         # Маркеры врагов
         for enemy in world.sprite_group:
             enemy_x = enemy.sprite_x / map_real_size[0] * \
-                      map_full_size[0] + sprites_offset[0]
+                map_full_size[0] + sprites_offset[0]
             enemy_y = (map_real_size[1] - enemy.sprite_y) / \
-                      map_real_size[1] * map_full_size[1] + sprites_offset[1]
+                map_real_size[1] * map_full_size[1] + sprites_offset[1]
 
             if enemy_x - map_subsurface_size[0] > map_size[0] or \
                HEIGHT - enemy_y - map_subsurface_size[1] < \
@@ -654,7 +659,7 @@ class Drawing:
                     ),
                     radius
                 )
-        
+
         # Стерлка взгляда игрока для маркера
         arrow_points = []
         for radius, deg in [
@@ -664,7 +669,7 @@ class Drawing:
         ]:
             arrow_points.append((
                 map_size[0] / 2 + radius * cos(radians(deg)),
-                HEIGHT - map_size[1] / 2  + radius * sin(radians(deg))
+                HEIGHT - map_size[1] / 2 + radius * sin(radians(deg))
             ))
 
         pygame.draw.polygon(
@@ -672,7 +677,7 @@ class Drawing:
             (255, 255, 255),
             arrow_points
         )
-        
+
         # Маркер игрока
         pygame.draw.circle(
             self.screen,
@@ -702,14 +707,14 @@ class Drawing:
             6
         )
 
-    
     def health_bar(self, player):
         self.rc.get('health_bar').set_value(player.health)
         self.rc.get('health_bar').draw(self.screen)
-    
+
     def score_card(self, score):
+        # Карточка, которая показывает количество очков
         self.screen.blit(
-            self.rc.get('score_card'),
+            self.rc.get('score_card_background'),
             (10, 10)
         )
 
@@ -741,7 +746,7 @@ class Drawing:
             self.rc.get('world_sky'),
             sky_size
         )
-        
+
         # Заполнения всей ширины экрана бесшовной текстурой неба
         for i in range(
             sky_offset % sky_size[0] - sky_size[0],
@@ -760,8 +765,12 @@ class Drawing:
         )
 
     def world(self, world, player):
+        # Отрисовка мира
+
+        # Список объектов и спрайтов, отсортированных по глубине
         z_buffer = []
 
+        # Добавляем спрайты в z_buffer
         for sprite in world.sprite_group:
             sprite_distance = (
                 (sprite.sprite_x - player.x) ** 2 +
@@ -776,10 +785,13 @@ class Drawing:
                 sprite
             ])
 
+        # Добавляем длины длины лучей и информацию об объектах,
+        # с которыми они столкнулись, в z_buffer
         for i in range(self.rc.get('setting_ray_amount')):
             ray_angle_x = player.vx + i * (
                 FOV / self.rc.get('setting_ray_amount')
             ) - FOV / 2
+
             depth, ray_offset, obj_info = ray_cast(
                 world,
                 player.x,
@@ -789,7 +801,7 @@ class Drawing:
 
             # Исправление эффекта рыбьего глаза
             depth *= cos(radians(player.vx - ray_angle_x))
-            
+
             z_buffer.append([
                 depth,
                 obj_info,
@@ -798,18 +810,21 @@ class Drawing:
                 ]
             ])
 
+        # Отрисовываем объекты и спрайты в порядке:
+        # от дальнего к ближнему
         for depth, obj_info, obj_data in sorted(
             z_buffer, key=lambda x: x[0], reverse=True
         ):
             if obj_info['type'] in ['WorldSprite', 'Enemy', 'AnimatedEnemy']:
+                # Отрисовка спрайтов
                 sprite = obj_data
                 sprite.draw(self.screen)
-            elif obj_info['type'] == 'Wall':
+            elif obj_info['type'] == 'Wall':  # Обычная стена без текстуры
                 i, ray_offset = obj_data
 
                 # Высота проекции стены на экран
                 wall_height = 5 * (DIST * GRID_SIZE) // \
-                              (depth + 0.0001)
+                    (depth + 0.0001)
 
                 pixel_color = [
                     max(
@@ -831,12 +846,12 @@ class Drawing:
                         wall_height
                     )
                 )
-            elif obj_info['type'] == 'TexturedWall':
+            elif obj_info['type'] == 'TexturedWall':  # Стена с текстурой
                 i, ray_offset = obj_data
 
                 # Высота проекции стены на экран
                 wall_height = 5 * (DIST * GRID_SIZE) // \
-                              (depth + 0.0001)
+                    (depth + 0.0001)
 
                 tile_scale = DIST / (depth + 0.0001)
                 tile_scale = min(5, max(1, tile_scale))
@@ -893,6 +908,7 @@ class Drawing:
                 )
 
     def menu(self, menu_screen='main', **kwargs):
+        # Отрисовка меню
         action = ''
         menu_running = True
         clock = pygame.time.Clock()
@@ -921,9 +937,12 @@ class Drawing:
                 for btn in [start_button, settings_button, exit_button]:
                     btn.update_state(pygame.mouse)
 
+                    # Проверка нажатия на кнопку
                     if btn.get_state() == 'clicked-mouseup':
                         self.rc.get('button_sound').play()
 
+                        # Выполнение действий, в зависимости от того,
+                        # какая кнопка была нажата
                         if id(btn) == id(start_button):
                             action = 'start_game'
                             menu_running = False
@@ -936,7 +955,8 @@ class Drawing:
                     btn.draw(self.screen)
             elif menu_screen == 'settings':
                 for slider_key in [
-                    'music_volume', 'sound_volume', 'rays_amount', 'mouse_sensetivity'
+                    'music_volume', 'sound_volume', 'rays_amount',
+                    'mouse_sensetivity'
                 ]:
                     self.rc.get(slider_key + '_slider').update_state(
                         pygame.mouse
@@ -967,7 +987,7 @@ class Drawing:
                 sound_volume = self.rc.get(
                     'sound_volume_slider'
                 ).get_value() / 100
-                
+
                 rays_amount = int(
                     self.rc.get(
                         'rays_amount_slider'
@@ -978,11 +998,21 @@ class Drawing:
                 self.rc.get('menu_music').set_volume(music_volume)
                 self.rc.get('gun_sound').set_volume(sound_volume)
                 self.rc.get('hit_sound').set_volume(sound_volume)
-                
-                self.rc.load('setting_mouse_sensetivity', mouse_sensetivity, rewrite=True)
-                self.rc.load('setting_music_volume', music_volume, rewrite=True)
-                self.rc.load('setting_sound_volume', sound_volume, rewrite=True)
-                self.rc.load('setting_ray_amount', rays_amount, rewrite=True)
+
+                self.rc.load(
+                    'setting_mouse_sensetivity',
+                    mouse_sensetivity,
+                    rewrite=True
+                )
+                self.rc.load(
+                    'setting_music_volume', music_volume, rewrite=True
+                )
+                self.rc.load(
+                    'setting_sound_volume', sound_volume, rewrite=True
+                )
+                self.rc.load(
+                    'setting_ray_amount', rays_amount, rewrite=True
+                )
 
                 back_button.update_state(pygame.mouse)
                 back_button.draw(self.screen)
@@ -1018,6 +1048,7 @@ class Drawing:
         return action
 
     def aim(self):
+        # Отрисовка прицела
         aim_img = self.rc.get('aim')
         self.screen.blit(
             aim_img,
@@ -1028,6 +1059,7 @@ class Drawing:
         )
 
     def weapon(self, weapon):
+        # Отрисовка оружия
         img_original_width = self.rc.get(
             weapon.animations[weapon.state[0]][0][weapon.state[1]]
         ).get_size()[0]
